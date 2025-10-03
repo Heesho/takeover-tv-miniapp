@@ -49,8 +49,8 @@ export async function openExternalUrl(url: string) {
 export async function triggerHaptic(style: 'light' | 'medium' | 'heavy' = 'medium') {
   try {
     const context = await sdk.context;
-    if (context.features.haptics) {
-      await sdk.actions.haptics({
+    if (context.features?.haptics) {
+      await (sdk.actions as any).haptics({
         type: 'impact',
         style,
       });
