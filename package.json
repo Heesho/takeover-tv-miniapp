@@ -1,0 +1,35 @@
+{
+  "name": "takeover-tv",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "check": "node scripts/check-setup.js",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@farcaster/miniapp-sdk": "^0.1.10",
+    "@farcaster/miniapp-wagmi-connector": "^1.0.0",
+    "@tailwindcss/postcss": "^4.1.14",
+    "@tanstack/react-query": "^5.90.2",
+    "@wagmi/connectors": "^5.11.2",
+    "autoprefixer": "^10.4.21",
+    "next": "15.0.0",
+    "postcss": "^8.5.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.14",
+    "viem": "^2.37.12",
+    "wagmi": "^2.17.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.0",
+    "typescript": "^5"
+  }
+}
