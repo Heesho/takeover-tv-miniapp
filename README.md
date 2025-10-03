@@ -221,3 +221,4 @@ Make sure your manifest is properly signed and accessible at `https://yourdomain
 ## License
 
 MIT
+# takeover-tv-miniapp
