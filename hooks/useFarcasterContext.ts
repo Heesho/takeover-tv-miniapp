@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { sdk, type MiniAppContext } from '@farcaster/miniapp-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
+
+type MiniAppContext = Awaited<typeof sdk.context>;
 
 export function useFarcasterContext() {
   const [context, setContext] = useState<MiniAppContext | null>(null);
