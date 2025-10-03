@@ -76,48 +76,36 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
-      {/* Header */}
-      <header className="bg-gray-950 border-b border-gray-800 px-4 py-3">
+      {/* Header - TV Style */}
+      <header className="bg-gradient-to-b from-gray-900 to-black border-b-4 border-gray-700 px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="text-white text-xl md:text-2xl font-bold tracking-tight">
-            TakeoverTV
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
+            <h1 className="text-white text-xl md:text-2xl font-bold tracking-wider uppercase">
+              TakeoverTV
+            </h1>
+          </div>
           {!mounted ? (
             <div className="text-gray-400 text-sm">Loading...</div>
           ) : farcasterUser ? (
-            <div className="flex items-center gap-3">
-              {/* Farcaster User Profile */}
-              <div className="flex items-center gap-2">
-                {farcasterUser.pfpUrl && (
-                  <img
-                    src={farcasterUser.pfpUrl}
-                    alt={farcasterUser.displayName || farcasterUser.username || 'User'}
-                    className="w-8 h-8 rounded-full border-2 border-purple-500"
-                  />
-                )}
-                <div className="flex flex-col items-start">
-                  <div className="text-white text-sm font-medium">
-                    {farcasterUser.displayName || farcasterUser.username || 'Anonymous'}
-                  </div>
-                  {farcasterUser.username && (
-                    <div className="text-gray-400 text-xs">
-                      @{farcasterUser.username}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Wallet Connection Status */}
-              {isConnected && address && (
-                <div className="flex flex-col items-end gap-1 ml-2 pl-2 border-l border-gray-700">
-                  <div className="text-green-500 text-xs flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                    Wallet
-                  </div>
-                  <div className="text-gray-400 text-xs font-mono">
-                    {address.slice(0, 6)}...{address.slice(-4)}
-                  </div>
-                </div>
+            <div className="flex items-center gap-2">
+              {farcasterUser.pfpUrl && (
+                <img
+                  src={farcasterUser.pfpUrl}
+                  alt={farcasterUser.displayName || farcasterUser.username || 'User'}
+                  className="w-8 h-8 rounded-full border-2 border-gray-600"
+                />
               )}
+              <div className="flex flex-col items-start">
+                <div className="text-white text-sm font-medium">
+                  {farcasterUser.displayName || farcasterUser.username || 'Anonymous'}
+                </div>
+                {farcasterUser.username && (
+                  <div className="text-gray-400 text-xs">
+                    @{farcasterUser.username}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="text-gray-400 text-sm">Connecting...</div>
@@ -127,9 +115,13 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col">
-        {/* Video Player - Full width, 16:9 aspect ratio */}
-        <div className="w-full bg-black">
-          <VideoPlayer uri={uri} isLoading={isChannelLoading} />
+        {/* Video Player - TV Frame */}
+        <div className="w-full bg-black p-4 md:p-6">
+          <div className="max-w-4xl mx-auto">
+            <div className="border-8 border-gray-800 rounded-lg shadow-2xl overflow-hidden bg-black">
+              <VideoPlayer uri={uri} isLoading={isChannelLoading} />
+            </div>
+          </div>
         </div>
 
         {/* Channel Information */}

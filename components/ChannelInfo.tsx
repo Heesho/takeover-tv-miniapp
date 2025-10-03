@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { formatEther } from 'viem';
 import type { Address } from 'viem';
 
@@ -9,7 +10,15 @@ interface ChannelInfoProps {
   quoteTokenDecimals?: number;
 }
 
+interface FarcasterProfile {
+  fid: number;
+  username: string;
+  displayName: string;
+  pfpUrl: string;
+}
+
 export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInfoProps) {
+  const [ownerProfile, setOwnerProfile] = useState<FarcasterProfile | null>(null);
   const formatPrice = (priceInWei: bigint | undefined) => {
     if (!priceInWei) return '0.00';
 
@@ -29,6 +38,40 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  useEffect(() => {
+    async function fetchOwnerProfile() {
+      if (!owner) return;
+
+      try {
+        const response = await fetch(
+          `https://api.warpcast.com/v2/verifications?address=${owner.toLowerCase()}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.result?.fid) {
+            const userResponse = await fetch(
+              `https://api.warpcast.com/v2/user-by-fid?fid=${data.result.fid}`
+            );
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              setOwnerProfile({
+                fid: userData.result.user.fid,
+                username: userData.result.user.username,
+                displayName: userData.result.user.displayName,
+                pfpUrl: userData.result.user.pfp.url,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch owner profile:', error);
+      }
+    }
+
+    fetchOwnerProfile();
+  }, [owner]);
+
   return (
     <div className="w-full bg-gray-900 px-4 py-6 md:px-6 md:py-8">
       <div className="max-w-4xl mx-auto">
@@ -38,9 +81,27 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
             <div className="text-gray-400 text-xs md:text-sm mb-2 uppercase tracking-wide">
               Current Owner
             </div>
-            <div className="text-white text-sm md:text-base font-mono">
-              {owner ? shortenAddress(owner) : '—'}
-            </div>
+            {ownerProfile ? (
+              <div className="flex items-center gap-2">
+                <img
+                  src={ownerProfile.pfpUrl}
+                  alt={ownerProfile.displayName}
+                  className="w-8 h-8 rounded-full border-2 border-gray-600"
+                />
+                <div className="flex flex-col">
+                  <div className="text-white text-sm md:text-base font-medium">
+                    {ownerProfile.displayName}
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    @{ownerProfile.username}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-white text-sm md:text-base font-mono">
+                {owner ? shortenAddress(owner) : '—'}
+              </div>
+            )}
           </div>
 
           {/* Current Price */}
@@ -49,35 +110,10 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
               Takeover Price
             </div>
             <div className="text-white text-lg md:text-2xl font-bold">
-              {price !== undefined ? (
-                <>
-                  ${formatPrice(price)}
-                  <span className="text-sm md:text-base text-gray-400 ml-1">USDC</span>
-                </>
-              ) : (
-                '—'
-              )}
+              {price !== undefined ? `$${formatPrice(price)}` : '—'}
             </div>
           </div>
         </div>
-
-        {/* Price Decay Indicator */}
-        {price !== undefined && price > 0n && (
-          <div className="mt-4 flex items-center text-xs md:text-sm text-gray-400">
-            <svg
-              className="w-4 h-4 mr-2 animate-pulse"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Price is continuously decaying
-          </div>
-        )}
       </div>
     </div>
   );

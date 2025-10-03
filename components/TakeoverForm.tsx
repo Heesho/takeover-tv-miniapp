@@ -217,33 +217,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     return `${integerPart}.${fractionalStr.slice(0, 2)}`;
   };
 
-  if (!showForm) {
-    return (
-      <div className="w-full px-4 py-6 md:px-6 md:py-8">
-        <button
-          onClick={() => setShowForm(true)}
-          disabled={!isConnected || !currentPrice}
-          className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-4 md:py-6 px-6 rounded-lg text-lg md:text-xl transition-colors duration-200 shadow-lg"
-        >
-          {!mounted
-            ? 'Loading...'
-            : !isConnected
-            ? 'Connect Wallet First'
-            : currentPrice
-            ? `Takeover for $${formatPrice(currentPrice)} USDC`
-            : 'Loading...'}
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full px-4 py-6 md:px-6 md:py-8 bg-gray-900">
       <div className="max-w-2xl mx-auto">
-        <h3 className="text-white text-xl md:text-2xl font-bold mb-4">
-          Take Control of the Channel
-        </h3>
-
         {step === 'input' && (
           <div className="space-y-4">
             <div>
@@ -257,7 +233,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none"
+                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-gray-500 focus:outline-none"
                 />
                 {isValidUrl !== null && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -280,21 +256,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               )}
             </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowForm(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={!isValidUrl || !currentPrice}
-                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors"
-              >
-                Confirm - ${formatPrice(currentPrice)} USDC
-              </button>
-            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={!isValidUrl || !currentPrice || !isConnected}
+              className="w-full bg-gray-200 hover:bg-white disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-lg text-lg transition-colors"
+            >
+              {!mounted
+                ? 'Loading...'
+                : !isConnected
+                ? 'Connect Wallet First'
+                : currentPrice
+                ? `Takeover for $${formatPrice(currentPrice)}`
+                : 'Loading...'}
+            </button>
           </div>
         )}
 
