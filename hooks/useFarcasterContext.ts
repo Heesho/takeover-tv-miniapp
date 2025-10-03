@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { sdk, type MiniAppContext } from '@farcaster/miniapp-sdk';
 
 export function useFarcasterContext() {
-  const [context, setContext] = useState(sdk.context);
+  const [context, setContext] = useState<MiniAppContext | null>(null);
 
   useEffect(() => {
-    // Context is available immediately, but we can track updates
-    setContext(sdk.context);
+    sdk.context.then(setContext);
   }, []);
 
   return context;
@@ -14,15 +13,15 @@ export function useFarcasterContext() {
 
 export function useFarcasterUser() {
   const context = useFarcasterContext();
-  return context.user;
+  return context?.user;
 }
 
 export function useFarcasterClient() {
   const context = useFarcasterContext();
-  return context.client;
+  return context?.client;
 }
 
 export function useFarcasterFeatures() {
   const context = useFarcasterContext();
-  return context.features;
+  return context?.features;
 }
