@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useAccount, useReconnect } from 'wagmi';
-import { sdk, type Context } from '@farcaster/miniapp-sdk';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { ChannelInfo } from '@/components/ChannelInfo';
 import { TakeoverForm } from '@/components/TakeoverForm';
 import { useCurrentChannel, useCurrentPrice, useQuoteToken, useTakeoverEvents } from '@/hooks/useTelevision';
 
+type FarcasterContext = Awaited<typeof sdk.context>;
+
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
   const { reconnect } = useReconnect();
-  const [farcasterUser, setFarcasterUser] = useState<Context['user'] | null>(null);
+  const [farcasterUser, setFarcasterUser] = useState<FarcasterContext['user'] | null>(null);
   const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
   const { price, isLoading: isPriceLoading } = useCurrentPrice();
   const quoteToken = useQuoteToken();
