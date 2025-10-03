@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAccount, useConnect } from 'wagmi';
-import { sdk } from '@farcaster/miniapp-sdk';
+import { useAccount, useReconnect } from 'wagmi';
+import { sdk, type Context } from '@farcaster/miniapp-sdk';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { ChannelInfo } from '@/components/ChannelInfo';
 import { TakeoverForm } from '@/components/TakeoverForm';
@@ -11,7 +11,8 @@ import { useCurrentChannel, useCurrentPrice, useQuoteToken, useTakeoverEvents } 
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
-  const { connect, connectors } = useConnect();
+  const { reconnect } = useReconnect();
+  const [farcasterUser, setFarcasterUser] = useState<Context['user'] | null>(null);
   const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
   const { price, isLoading: isPriceLoading } = useCurrentPrice();
   const quoteToken = useQuoteToken();
@@ -41,16 +42,17 @@ export default function Home() {
           location: context.location,
         });
 
-        // Auto-connect to Farcaster wallet
-        if (!isConnected && connectors.length > 0) {
-          const farcasterConnector = connectors[0]; // farcasterMiniApp is the only connector
-          if (farcasterConnector) {
-            try {
-              await connect({ connector: farcasterConnector });
-              console.log('Connected to Farcaster wallet');
-            } catch (error) {
-              console.error('Failed to connect to Farcaster wallet:', error);
-            }
+        // Store Farcaster user info for display
+        setFarcasterUser(context.user);
+
+        // Auto-reconnect to Farcaster wallet using wagmi's reconnect
+        // This works with the farcasterMiniApp connector automatically
+        if (!isConnected) {
+          try {
+            await reconnect();
+            console.log('Reconnected to Farcaster wallet');
+          } catch (error) {
+            console.error('Failed to reconnect to Farcaster wallet:', error);
           }
         }
 
@@ -68,7 +70,7 @@ export default function Home() {
     };
 
     init();
-  }, [mounted, isConnected, connect, connectors]);
+  }, [mounted, isConnected, reconnect]);
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
@@ -80,27 +82,43 @@ export default function Home() {
           </h1>
           {!mounted ? (
             <div className="text-gray-400 text-sm">Loading...</div>
-          ) : isConnected && address ? (
-            <div className="flex flex-col items-end gap-1">
-              <div className="text-green-500 text-sm flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                Connected
+          ) : farcasterUser ? (
+            <div className="flex items-center gap-3">
+              {/* Farcaster User Profile */}
+              <div className="flex items-center gap-2">
+                {farcasterUser.pfpUrl && (
+                  <img
+                    src={farcasterUser.pfpUrl}
+                    alt={farcasterUser.displayName || farcasterUser.username || 'User'}
+                    className="w-8 h-8 rounded-full border-2 border-purple-500"
+                  />
+                )}
+                <div className="flex flex-col items-start">
+                  <div className="text-white text-sm font-medium">
+                    {farcasterUser.displayName || farcasterUser.username || 'Anonymous'}
+                  </div>
+                  {farcasterUser.username && (
+                    <div className="text-gray-400 text-xs">
+                      @{farcasterUser.username}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-gray-400 text-xs font-mono">
-                {address.slice(0, 6)}...{address.slice(-4)}
-              </div>
+              {/* Wallet Connection Status */}
+              {isConnected && address && (
+                <div className="flex flex-col items-end gap-1 ml-2 pl-2 border-l border-gray-700">
+                  <div className="text-green-500 text-xs flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    Wallet
+                  </div>
+                  <div className="text-gray-400 text-xs font-mono">
+                    {address.slice(0, 6)}...{address.slice(-4)}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <button
-              onClick={() => {
-                if (connectors.length > 0) {
-                  connect({ connector: connectors[0] });
-                }
-              }}
-              className="text-gray-400 hover:text-white text-sm transition-colors px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-500"
-            >
-              Connect Wallet
-            </button>
+            <div className="text-gray-400 text-sm">Connecting...</div>
           )}
         </div>
       </header>

@@ -17,6 +17,8 @@ export const config = isMainnet
         // Provides access to user's Ethereum address and transaction signing
         farcasterMiniApp(),
       ],
+      // Enable auto-reconnection - this makes the Farcaster wallet auto-connect
+      multiInjectedProviderDiscovery: false,
     })
   : createConfig({
       chains: [baseSepolia],
@@ -28,4 +30,6 @@ export const config = isMainnet
         // Provides access to user's Ethereum address and transaction signing
         farcasterMiniApp(),
       ],
+      // Enable auto-reconnection - this makes the Farcaster wallet auto-connect
+      multiInjectedProviderDiscovery: false,
     });
