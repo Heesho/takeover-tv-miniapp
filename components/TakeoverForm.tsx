@@ -165,7 +165,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         } as any);
 
         // Get transaction hash from batch
-        const calls = await walletClient.request({
+        const calls: any = await walletClient.request({
           method: 'wallet_getCallsStatus',
           params: [batchId],
         } as any);
