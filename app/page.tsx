@@ -33,8 +33,8 @@ export default function Home() {
 
     const init = async () => {
       try {
-        // Get SDK context - contains Farcaster user info
-        const context = sdk.context;
+        // Get SDK context - contains Farcaster user info (it's a Promise)
+        const context = await sdk.context;
         console.log('Farcaster context:', {
           user: context.user,
           client: context.client,
@@ -59,7 +59,11 @@ export default function Home() {
       } catch (error) {
         console.error('Initialization error:', error);
         // Still call ready() even if there's an error to prevent infinite splash
-        await sdk.actions.ready();
+        try {
+          await sdk.actions.ready();
+        } catch (e) {
+          console.error('Failed to call ready:', e);
+        }
       }
     };
 
