@@ -170,7 +170,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
           params: [batchId],
         } as any);
 
-        if (calls.status === 'CONFIRMED' && calls.receipts?.[0]?.transactionHash) {
+        if (calls?.status === 'CONFIRMED' && calls.receipts?.[0]?.transactionHash) {
           setBatchTxHash(calls.receipts[0].transactionHash as `0x${string}`);
         }
       } else {
