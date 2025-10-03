@@ -48,7 +48,8 @@ export async function openExternalUrl(url: string) {
  */
 export async function triggerHaptic(style: 'light' | 'medium' | 'heavy' = 'medium') {
   try {
-    if (sdk.context.features.haptics) {
+    const context = await sdk.context;
+    if (context.features.haptics) {
       await sdk.actions.haptics({
         type: 'impact',
         style,
@@ -78,27 +79,31 @@ export async function closeMiniApp() {
 /**
  * Get Farcaster user info
  */
-export function getFarcasterUser() {
-  return sdk.context.user;
+export async function getFarcasterUser() {
+  const context = await sdk.context;
+  return context.user;
 }
 
 /**
  * Get client platform type
  */
-export function getClientPlatform() {
-  return sdk.context.client.platformType;
+export async function getClientPlatform() {
+  const context = await sdk.context;
+  return context.client.platformType;
 }
 
 /**
  * Check if running in Farcaster client
  */
-export function isInFarcaster() {
-  return sdk.context.client.platformType !== undefined;
+export async function isInFarcaster() {
+  const context = await sdk.context;
+  return context.client.platformType !== undefined;
 }
 
 /**
  * Get safe area insets for mobile
  */
-export function getSafeAreaInsets() {
-  return sdk.context.client.safeAreaInsets;
+export async function getSafeAreaInsets() {
+  const context = await sdk.context;
+  return context.client.safeAreaInsets;
 }
