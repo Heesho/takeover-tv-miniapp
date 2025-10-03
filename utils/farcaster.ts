@@ -22,10 +22,7 @@ export async function shareOnFarcaster(videoUrl: string) {
  */
 export async function addToHomeScreen() {
   try {
-    await sdk.actions.addMiniApp({
-      url: `https://${env.appDomain}`,
-      name: env.appName,
-    });
+    await sdk.actions.addMiniApp();
     return true;
   } catch (error) {
     console.error('Failed to add to home screen:', error);
