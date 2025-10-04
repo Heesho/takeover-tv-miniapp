@@ -248,3 +248,44 @@ input, select, textarea {
 .bg-radial-gradient {
   background: radial-gradient(circle, var(--tw-gradient-stops));
 }
+
+/* TV Power-On Animation */
+.tv-power-on {
+  animation: powerOn 1.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes powerOn {
+  0% {
+    background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+  }
+  10% {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 1%);
+  }
+  30% {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.6) 0%, transparent 5%);
+  }
+  50% {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 30%);
+  }
+  70% {
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+  }
+  100% {
+    background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+  }
+}
+
+/* App fade-in animation */
+.app-fade-in {
+  animation: fadeInApp 0.8s ease-out forwards;
+}
+
+@keyframes fadeInApp {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
