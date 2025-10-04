@@ -60,7 +60,7 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
         {/* Power button (TV remote style) */}
         <button
           onClick={handleStart}
-          className="group relative mx-auto"
+          className="group relative flex flex-col items-center mx-auto"
         >
           {/* Power button */}
           <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-gray-600 flex items-center justify-center transition-all duration-200 group-hover:border-red-500 group-hover:shadow-xl group-hover:shadow-red-500/40 group-active:scale-95 group-active:bg-gray-950">
