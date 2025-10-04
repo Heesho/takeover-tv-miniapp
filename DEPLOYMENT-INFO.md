@@ -5,9 +5,9 @@
 ### Contract Addresses
 
 **Television Contract**
-- Address: `0x56CB1908D5B927A8f710a0247c63B87dc578e5dA`
+- Address: `0x7136763c7951F923b1861774CF9ef12095cb21DD`
 - Network: Base Sepolia (Chain ID: 84532)
-- Explorer: https://sepolia.basescan.org/address/0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+- Explorer: https://sepolia.basescan.org/address/0x7136763c7951F923b1861774CF9ef12095cb21DD
 
 **USDC (Quote Token)**
 - Address: `0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7`
@@ -102,7 +102,7 @@
 ```
 
 **On BaseScan**:
-1. Go to: https://sepolia.basescan.org/address/0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+1. Go to: https://sepolia.basescan.org/address/0x7136763c7951F923b1861774CF9ef12095cb21DD
 2. Click "Contract" → "Read Contract"
 3. Call `getSlot0()` to see current state
 4. Call `getPrice()` to see current price
@@ -112,7 +112,7 @@
 **Check contract on BaseScan**:
 ```bash
 # Television Contract
-open https://sepolia.basescan.org/address/0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+open https://sepolia.basescan.org/address/0x7136763c7951F923b1861774CF9ef12095cb21DD
 
 # USDC Token
 open https://sepolia.basescan.org/address/0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7
@@ -178,7 +178,7 @@ To test the Mini App in Farcaster:
 Your `.env.local` file should contain:
 
 ```env
-NEXT_PUBLIC_TELEVISION_ADDRESS=0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+NEXT_PUBLIC_TELEVISION_ADDRESS=0x7136763c7951F923b1861774CF9ef12095cb21DD
 NEXT_PUBLIC_CHAIN_ID=84532
 NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
 NEXT_PUBLIC_APP_DOMAIN=localhost:3000

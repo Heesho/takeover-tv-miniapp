@@ -62,32 +62,26 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
           onClick={handleStart}
           className="group relative mx-auto"
         >
-          {/* Remote control body */}
-          <div className="relative bg-gradient-to-b from-gray-800 to-gray-900 rounded-3xl px-8 py-10 border-2 border-gray-700 shadow-2xl transition-all duration-300 hover:shadow-red-500/30">
-            {/* Power button */}
-            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-b from-gray-700 to-gray-800 border-3 border-gray-600 flex items-center justify-center transition-all duration-200 group-hover:border-red-500 group-hover:shadow-lg group-hover:shadow-red-500/50 group-active:scale-95">
-              {/* Power icon */}
-              <svg
-                className="w-10 h-10 md:w-12 md:h-12 text-gray-400 group-hover:text-red-500 transition-colors duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M12 2v10m0 0a6 6 0 100 12 6 6 0 000-12z"
-                />
-              </svg>
-            </div>
-
-            {/* Power indicator LED */}
-            <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-gray-600 group-hover:bg-red-500 group-hover:shadow-lg group-hover:shadow-red-500/80 transition-all duration-200" />
+          {/* Power button */}
+          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-b from-gray-800 to-gray-900 border-2 border-gray-600 flex items-center justify-center transition-all duration-200 group-hover:border-red-500 group-hover:shadow-xl group-hover:shadow-red-500/40 group-active:scale-95 group-active:bg-gray-950">
+            {/* Power icon */}
+            <svg
+              className="w-12 h-12 md:w-14 md:h-14 text-gray-400 group-hover:text-red-500 transition-colors duration-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 2v10m0 0a6 6 0 100 12 6 6 0 000-12z"
+              />
+            </svg>
           </div>
 
           {/* Button label */}
-          <div className="mt-4 text-gray-400 text-sm uppercase tracking-widest group-hover:text-red-500 transition-colors duration-200">
+          <div className="mt-6 text-gray-400 text-sm uppercase tracking-widest group-hover:text-red-500 transition-colors duration-200">
             Press to Power On
           </div>
         </button>

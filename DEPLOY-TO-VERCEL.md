@@ -37,7 +37,7 @@ git push -u origin main
 Click "Environment Variables" and add these:
 
 ```
-NEXT_PUBLIC_TELEVISION_ADDRESS=0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+NEXT_PUBLIC_TELEVISION_ADDRESS=0x7136763c7951F923b1861774CF9ef12095cb21DD
 NEXT_PUBLIC_CHAIN_ID=84532
 NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
 NEXT_PUBLIC_APP_NAME=TakeoverTV
@@ -121,7 +121,7 @@ npx vercel --prod
 
 # Then add environment variables:
 npx vercel env add NEXT_PUBLIC_TELEVISION_ADDRESS
-# Enter: 0x56CB1908D5B927A8f710a0247c63B87dc578e5dA
+# Enter: 0x7136763c7951F923b1861774CF9ef12095cb21DD
 
 npx vercel env add NEXT_PUBLIC_CHAIN_ID
 # Enter: 84532
