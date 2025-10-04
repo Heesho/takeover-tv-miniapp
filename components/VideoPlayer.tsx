@@ -60,6 +60,27 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
     previousUriRef.current = uri;
   }, [uri, currentVideoId]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Listen for YouTube player state changes to track mute status
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.youtube.com') return;
+
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
+          setIsMuted(data.info.muted);
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="w-full aspect-video bg-black flex items-center justify-center">
@@ -96,25 +117,6 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
       </div>
     );
   }
-
-  useEffect(() => {
-    // Listen for YouTube player state changes to track mute status
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== 'https://www.youtube.com') return;
-
-      try {
-        const data = JSON.parse(event.data);
-        if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
-          setIsMuted(data.info.muted);
-        }
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
 
   return (
     <div className="w-full aspect-video bg-black">
