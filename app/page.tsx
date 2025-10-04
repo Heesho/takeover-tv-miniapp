@@ -116,10 +116,19 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Video Player - TV Frame */}
-        <div className="w-full bg-black p-2 md:p-3">
+        <div className="w-full bg-black p-4">
           <div className="max-w-4xl mx-auto">
-            <div className="overflow-hidden bg-black">
-              <VideoPlayer uri={uri} isLoading={isChannelLoading} />
+            {/* TV Bezel/Frame */}
+            <div className="relative bg-gradient-to-b from-gray-800 to-gray-900 p-6 rounded-lg shadow-2xl">
+              {/* Inner Screen Border */}
+              <div className="relative bg-black p-1 rounded">
+                {/* Screen */}
+                <div className="overflow-hidden bg-black rounded-sm">
+                  <VideoPlayer uri={uri} isLoading={isChannelLoading} />
+                </div>
+              </div>
+              {/* Power Indicator Light */}
+              <div className="absolute bottom-3 right-3 w-2 h-2 bg-gray-600 rounded-full"></div>
             </div>
           </div>
         </div>
