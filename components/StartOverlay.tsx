@@ -75,7 +75,7 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2.5}
-                d="M12 2v10m0 0a6 6 0 100 12 6 6 0 000-12z"
+                d="M12 6v6m0 0c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"
               />
             </svg>
           </div>
