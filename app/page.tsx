@@ -82,74 +82,69 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col app-fade-in">
+    <div className="h-screen bg-black flex flex-col app-fade-in overflow-hidden">
       {/* Header - Enhanced TV Style */}
-      <header className="relative bg-gradient-to-b from-gray-900 via-gray-800 to-black px-4 py-5 border-b border-gray-800">
+      <header className="relative bg-black px-3 py-2 border-b border-gray-800 flex-shrink-0">
         <div className="absolute inset-0 scanlines opacity-10 pointer-events-none" />
         <div className="max-w-6xl mx-auto flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Broadcast indicator */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" />
-              <div className="text-red-500 text-[10px] font-bold uppercase tracking-wider">Live</div>
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" />
+              <div className="text-red-500 text-[8px] font-bold uppercase tracking-wider">Live</div>
             </div>
 
             {/* Logo */}
-            <div className="flex flex-col">
-              <h1 className="text-white text-2xl md:text-3xl font-bold tracking-wider uppercase leading-none">
-                TakeoverTV
-              </h1>
-              <div className="text-gray-500 text-xs uppercase tracking-widest mt-0.5">
-                Community Controlled
-              </div>
-            </div>
+            <h1 className="text-white text-lg md:text-xl font-bold tracking-wider uppercase leading-none">
+              TAKEOVER<span className="text-red-500">TV</span>
+            </h1>
           </div>
 
           {/* User Profile */}
           {!mounted ? (
-            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
-              <div className="w-2 h-2 bg-gray-600 rounded-full animate-pulse" />
-              <div className="text-gray-400 text-sm">Connecting...</div>
+            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
+              <div className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-pulse" />
+              <div className="text-gray-400 text-xs">Connecting...</div>
             </div>
           ) : farcasterUser ? (
-            <div className="flex items-center gap-3 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
               {farcasterUser.pfpUrl && (
                 <img
                   src={farcasterUser.pfpUrl}
                   alt={farcasterUser.displayName || farcasterUser.username || 'User'}
-                  className="w-9 h-9 rounded-full border-2 border-gray-600"
+                  className="w-6 h-6 rounded-full border border-gray-600"
                 />
               )}
               <div className="flex flex-col items-start">
-                <div className="text-white text-sm font-semibold">
+                <div className="text-white text-xs font-semibold leading-tight">
                   {farcasterUser.displayName || farcasterUser.username || 'Anonymous'}
                 </div>
                 {farcasterUser.username && (
-                  <div className="text-gray-500 text-xs">
+                  <div className="text-gray-500 text-[10px] leading-tight">
                     @{farcasterUser.username}
                   </div>
                 )}
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
-              <div className="w-2 h-2 bg-gray-600 rounded-full animate-pulse" />
-              <div className="text-gray-400 text-sm">Connecting...</div>
+            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
+              <div className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-pulse" />
+              <div className="text-gray-400 text-xs">Connecting...</div>
             </div>
           )}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col min-h-0">
         {/* Video Player - Full Width with frame effect */}
-        <div className="w-full bg-black relative">
-          <div className="absolute inset-0 pointer-events-none border-4 border-gray-900 z-10" />
+        <div className="w-full bg-black relative flex-shrink-0">
+          <div className="absolute inset-0 pointer-events-none border-2 border-gray-900 z-10" />
           <VideoPlayer uri={uri} isLoading={isChannelLoading} />
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-gradient-to-b from-black via-gray-900 to-black">
+        <div className="flex-1 bg-black overflow-y-auto min-h-0">
           {/* Channel Information */}
           <ChannelInfo owner={owner} price={price} quoteTokenDecimals={6} />
 
@@ -162,11 +157,11 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="relative bg-gradient-to-t from-gray-900 via-gray-800 to-black px-4 py-4 border-t border-gray-800">
+        <footer className="relative bg-black px-3 py-2 border-t border-gray-800 flex-shrink-0">
           <div className="absolute inset-0 scanlines opacity-5 pointer-events-none" />
           <div className="max-w-6xl mx-auto text-center relative z-10">
-            <p className="text-gray-500 text-xs">
-              Community Controlled Television • Price starts high and drops to $0 over 24 hours
+            <p className="text-gray-500 text-[10px]">
+              Price doubles on takeover then drops to $0 over 24 hours
             </p>
           </div>
         </footer>

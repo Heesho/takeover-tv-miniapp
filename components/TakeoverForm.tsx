@@ -223,90 +223,80 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   };
 
   return (
-    <div className="w-full px-4 py-6">
+    <div className="w-full px-3 py-3">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-gray-900/50 rounded-lg border border-gray-800 p-6">
-          {step === 'input' && (
-            <div className="space-y-4">
-              {/* Section Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                </svg>
-                <h3 className="text-white text-lg font-bold uppercase tracking-wide">
-                  Broadcast Your Video
-                </h3>
-              </div>
-
-              <div>
-                {/* Validation indicator above input */}
-                <div className="flex items-center gap-2 mb-2 text-xs h-5">
-                  {isValidUrl !== null && (
-                    <>
-                      {isValidUrl ? (
-                        <>
-                          <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          <span className="text-green-500 font-medium">Valid YouTube URL</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                          <span className="text-red-500 font-medium">Invalid URL - Please check and try again</span>
-                        </>
-                      )}
-                    </>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    id="youtube-url"
-                    type="text"
-                    value={youtubeUrl}
-                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full px-4 py-3 bg-gray-800/50 text-white text-sm rounded-lg border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-500"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={!isValidUrl || !currentPrice || !isConnected}
-                className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-3 px-6 rounded-lg text-base transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                style={{ color: !isValidUrl || !currentPrice || !isConnected ? undefined : '#000000' }}
-              >
-                {!mounted
-                  ? 'Loading...'
-                  : !isConnected
-                  ? 'Connect Wallet First'
-                  : currentPrice
-                  ? `Take Over Channel for $${formatPrice(currentPrice)}`
-                  : 'Loading...'}
-              </button>
-
-              {/* USDC Balance & Mint */}
-              <div className="flex items-center justify-between bg-gray-800/30 rounded-lg px-4 py-3 border border-gray-800">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                    <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-gray-400 text-sm">Your Balance:</span>
-                  <span className="text-white font-semibold">${usdcBalance ? formatPrice(usdcBalance) : '0.00'} USDC</span>
-                </div>
-                <button
-                  onClick={handleMintUsdc}
-                  className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors"
-                >
-                  Mint $1000
-                </button>
-              </div>
+        {step === 'input' && (
+          <div className="space-y-2">
+            {/* Section Header */}
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              </svg>
+              <h3 className="text-white text-xs font-bold uppercase tracking-wide">
+                Broadcast Your Video
+              </h3>
             </div>
-          )}
+
+            <div>
+              {/* Validation indicator above input */}
+              <div className="flex items-center gap-1.5 mb-1 text-xs h-4">
+                {isValidUrl !== null && (
+                  <>
+                    {isValidUrl ? (
+                      <>
+                        <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-green-500 text-[10px] font-medium">Valid URL</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-red-500 text-[10px] font-medium">Invalid URL</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+              <input
+                id="youtube-url"
+                type="text"
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full px-3 py-2 bg-gray-800/50 text-white text-xs rounded border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-600"
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!isValidUrl || !currentPrice || !isConnected}
+              className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
+              style={{ color: !isValidUrl || !currentPrice || !isConnected ? undefined : '#000000' }}
+            >
+              {!mounted
+                ? 'Loading...'
+                : !isConnected
+                ? 'Connect Wallet First'
+                : currentPrice
+                ? 'Takeover'
+                : 'Loading...'}
+            </button>
+
+            {/* USDC Balance & Mint */}
+            <div className="flex items-center justify-between text-[10px] pt-1">
+              <span className="text-gray-500">Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}</span>
+              <button
+                onClick={handleMintUsdc}
+                className="bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
+              >
+                Mint $1000
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Status Message - Below input form */}
         {statusMessage && (
@@ -326,29 +316,28 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
           </div>
         )}
 
-          {(step === 'approve' || step === 'takeover') && (
-            <div className="text-center py-12">
-              <div className="relative inline-flex mb-6">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-white" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                  </svg>
-                </div>
+        {(step === 'approve' || step === 'takeover') && (
+          <div className="text-center py-6">
+            <div className="relative inline-flex mb-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
               </div>
-              <p className="text-white text-xl font-bold mb-2">
-                {step === 'approve' && (isApprovePending || isApproveLoading)
-                  ? 'Approving USDC...'
-                  : isBatchLoading
-                  ? 'Processing Batch Transaction...'
-                  : 'Processing Takeover...'}
-              </p>
-              <p className="text-gray-400 text-sm">
-                Please confirm the transaction in your wallet
-              </p>
             </div>
-          )}
-        </div>
+            <p className="text-white text-sm font-bold mb-1">
+              {step === 'approve' && (isApprovePending || isApproveLoading)
+                ? 'Approving USDC...'
+                : isBatchLoading
+                ? 'Processing Batch...'
+                : 'Processing Takeover...'}
+            </p>
+            <p className="text-gray-500 text-[10px]">
+              Confirm in your wallet
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
