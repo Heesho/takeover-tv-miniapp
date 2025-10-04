@@ -32,51 +32,53 @@ export function useCurrentChannel() {
 
 export function useCurrentPrice() {
   const [price, setPrice] = useState<bigint | undefined>();
-  const [isPolling, setIsPolling] = useState(true);
-  const publicClient = usePublicClient();
 
-  const { data: initialPrice, isLoading } = useReadContract({
+  // Get slot0 data for initPrice and startTime
+  const { data: slot0Data } = useReadContract({
+    address: env.televisionAddress,
+    abi: televisionABI,
+    functionName: 'getSlot0',
+  });
+
+  const { data: contractPrice, isLoading } = useReadContract({
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getPrice',
   });
 
+  // Client-side price decay calculation
   useEffect(() => {
-    if (initialPrice !== undefined) {
-      setPrice(initialPrice);
+    if (!slot0Data?.initPrice || !slot0Data?.startTime) {
+      setPrice(contractPrice);
+      return;
     }
-  }, [initialPrice]);
 
-  // Poll for price updates every 5 seconds since it decays continuously
-  // Stop polling when app is in background (performance optimization)
-  useEffect(() => {
-    if (!publicClient || !isPolling) return;
+    const initPrice = slot0Data.initPrice as bigint;
+    const startTime = Number(slot0Data.startTime);
+    const EPOCH_PERIOD = 24 * 60 * 60; // 24 hours in seconds
 
-    const interval = setInterval(async () => {
-      try {
-        const currentPrice = await publicClient.readContract({
-          address: env.televisionAddress,
-          abi: televisionABI,
-          functionName: 'getPrice',
-        });
-        setPrice(currentPrice);
-      } catch (error) {
-        console.error('Error fetching price:', error);
+    const updatePrice = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const timePassed = now - startTime;
+
+      if (timePassed >= EPOCH_PERIOD) {
+        setPrice(0n);
+        return;
       }
-    }, 5000);
 
-    return () => clearInterval(interval);
-  }, [publicClient, isPolling]);
-
-  // Pause polling when app is not visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsPolling(!document.hidden);
+      // Linear decay: price = initPrice - (initPrice * timePassed / EPOCH_PERIOD)
+      const decayedPrice = initPrice - (initPrice * BigInt(timePassed)) / BigInt(EPOCH_PERIOD);
+      setPrice(decayedPrice > 0n ? decayedPrice : 0n);
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
+    // Update immediately
+    updatePrice();
+
+    // Update every second for smooth countdown
+    const interval = setInterval(updatePrice, 1000);
+
+    return () => clearInterval(interval);
+  }, [slot0Data, contractPrice]);
 
   return { price, isLoading };
 }

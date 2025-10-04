@@ -218,22 +218,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   };
 
   return (
-    <div className="w-full px-4 py-6 md:px-6 md:py-8 bg-gray-900">
+    <div className="w-full px-4 py-3 bg-gray-900">
       <div className="max-w-2xl mx-auto">
         {step === 'input' && (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
-              <label htmlFor="youtube-url" className="block text-gray-300 text-sm mb-2">
-                YouTube Video URL
-              </label>
               <div className="relative">
                 <input
                   id="youtube-url"
                   type="text"
                   value={youtubeUrl}
                   onChange={(e) => setYoutubeUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-gray-500 focus:outline-none"
+                  placeholder={isValidUrl === false ? "Please enter a valid YouTube URL" : "https://www.youtube.com/watch?v=..."}
+                  className="w-full px-3 py-2 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:border-gray-500 focus:outline-none"
                 />
                 {isValidUrl !== null && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -249,17 +246,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                   </div>
                 )}
               </div>
-              {isValidUrl === false && (
-                <p className="text-gray-400 text-sm mt-2">
-                  Please enter a valid YouTube URL
-                </p>
-              )}
             </div>
 
             <button
               onClick={handleSubmit}
               disabled={!isValidUrl || !currentPrice || !isConnected}
-              className="w-full bg-gray-200 hover:bg-white disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold py-4 px-6 rounded-lg text-lg transition-colors"
+              className="w-full bg-gray-200 hover:bg-white disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-semibold py-2 px-4 rounded text-sm transition-colors"
             >
               {!mounted
                 ? 'Loading...'

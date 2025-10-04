@@ -2,7 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { formatEther } from 'viem';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import type { Address } from 'viem';
+import { env } from '@/utils/env';
+
+const MOCK_USDC_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'mint',
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+] as const;
 
 interface ChannelInfoProps {
   owner: Address | undefined;
@@ -19,6 +38,35 @@ interface FarcasterProfile {
 
 export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInfoProps) {
   const [ownerProfile, setOwnerProfile] = useState<FarcasterProfile | null>(null);
+  const { address } = useAccount();
+
+  // Get USDC balance
+  const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
+    address: env.usdcAddress as Address,
+    abi: MOCK_USDC_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+
+  // Mint USDC
+  const { writeContract: mintUsdc, data: mintHash } = useWriteContract();
+  const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({ hash: mintHash });
+
+  useEffect(() => {
+    if (isMintSuccess) {
+      refetchBalance();
+    }
+  }, [isMintSuccess, refetchBalance]);
+
+  const handleMintUsdc = () => {
+    if (!address) return;
+    mintUsdc({
+      address: env.usdcAddress as Address,
+      abi: MOCK_USDC_ABI,
+      functionName: 'mint',
+      args: [BigInt(1000 * 10 ** quoteTokenDecimals)], // Mint 1000 USDC
+    });
+  };
   const formatPrice = (priceInWei: bigint | undefined) => {
     if (!priceInWei) return '0.00';
 
@@ -73,44 +121,60 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
   }, [owner]);
 
   return (
-    <div className="w-full bg-gray-900 px-4 py-6 md:px-6 md:py-8">
+    <div className="w-full bg-gray-900 px-4 py-3">
       <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 gap-4 md:gap-6">
+        <div className="grid grid-cols-3 gap-3">
           {/* Current Owner */}
           <div>
-            <div className="text-gray-400 text-xs md:text-sm mb-2 uppercase tracking-wide">
-              Current Owner
+            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
+              Owner
             </div>
             {ownerProfile ? (
               <div className="flex items-center gap-2">
                 <img
                   src={ownerProfile.pfpUrl}
                   alt={ownerProfile.displayName}
-                  className="w-8 h-8 rounded-full border-2 border-gray-600"
+                  className="w-6 h-6 rounded-full border border-gray-600"
                 />
                 <div className="flex flex-col">
-                  <div className="text-white text-sm md:text-base font-medium">
+                  <div className="text-white text-xs font-medium">
                     {ownerProfile.displayName}
-                  </div>
-                  <div className="text-gray-400 text-xs">
-                    @{ownerProfile.username}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-white text-sm md:text-base font-mono">
+              <div className="text-white text-xs font-mono">
                 {owner ? shortenAddress(owner) : '—'}
               </div>
             )}
           </div>
 
           {/* Current Price */}
-          <div className="text-right">
-            <div className="text-gray-400 text-xs md:text-sm mb-2 uppercase tracking-wide">
-              Takeover Price
+          <div className="text-center">
+            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
+              Price
             </div>
-            <div className="text-white text-lg md:text-2xl font-bold">
+            <div className="text-white text-base font-bold">
               {price !== undefined ? `$${formatPrice(price)}` : '—'}
+            </div>
+          </div>
+
+          {/* USDC Balance & Mint */}
+          <div className="text-right">
+            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
+              Balance
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <div className="text-white text-xs font-mono">
+                ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}
+              </div>
+              <button
+                onClick={handleMintUsdc}
+                disabled={!address}
+                className="text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 px-2 py-0.5 rounded text-white transition-colors"
+              >
+                Mint
+              </button>
             </div>
           </div>
         </div>

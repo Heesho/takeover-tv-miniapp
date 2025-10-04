@@ -114,11 +114,11 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col overflow-hidden">
         {/* Video Player - TV Frame */}
-        <div className="w-full bg-black p-4 md:p-6">
+        <div className="w-full bg-black p-2 md:p-3">
           <div className="max-w-4xl mx-auto">
-            <div className="border-8 border-gray-800 rounded-lg shadow-2xl overflow-hidden bg-black">
+            <div className="border-4 border-gray-800 rounded overflow-hidden bg-black">
               <VideoPlayer uri={uri} isLoading={isChannelLoading} />
             </div>
           </div>
@@ -133,18 +133,6 @@ export default function Home() {
           quoteToken={quoteToken}
           onSuccess={refetchChannel}
         />
-
-        {/* Info Section */}
-        <div className="px-4 py-6 md:px-6 md:py-8 bg-gray-950 mt-auto">
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-gray-400 text-sm md:text-base">
-              A decentralized, community-controlled TV channel.
-            </p>
-            <p className="text-gray-500 text-xs md:text-sm mt-2">
-              Price decays continuously. Anyone can take control at any time.
-            </p>
-          </div>
-        </div>
       </main>
     </div>
   );

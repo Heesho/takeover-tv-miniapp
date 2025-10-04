@@ -16,4 +16,7 @@ export const env = {
 
   // App name
   appName: process.env.NEXT_PUBLIC_APP_NAME || 'TakeoverTV',
+
+  // USDC address (mock USDC for testing)
+  usdcAddress: (process.env.NEXT_PUBLIC_USDC_ADDRESS || '0x0') as `0x${string}`,
 } as const;
