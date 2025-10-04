@@ -86,8 +86,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const { epochId } = useCurrentChannel();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
-  const { writeContract: approve, data: approveHash, isPending: isApprovePending, error: approveError } = useWriteContract();
-  const { writeContract: takeover, data: takeoverHash, isPending: isTakeoverPending, error: takeoverError } = useWriteContract();
+  const { writeContract: approve, data: approveHash, isPending: isApprovePending, error: approveError, reset: resetApprove } = useWriteContract();
+  const { writeContract: takeover, data: takeoverHash, isPending: isTakeoverPending, error: takeoverError, reset: resetTakeover } = useWriteContract();
   const [batchTxHash, setBatchTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { isLoading: isApproveLoading, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
@@ -198,6 +198,10 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   const handleSubmit = async () => {
     if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) return;
+
+    // Reset any previous errors
+    resetApprove();
+    resetTakeover();
 
     // Check if approval is needed
     const needsApproval = !allowance || allowance < currentPrice;
