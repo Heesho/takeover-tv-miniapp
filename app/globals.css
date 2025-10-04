@@ -56,10 +56,6 @@ a {
   color: inherit !important;
 }
 
-button {
-  color: inherit !important;
-}
-
 input, select, textarea {
   color: inherit !important;
   caret-color: #ffffff !important;
