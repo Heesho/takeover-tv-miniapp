@@ -35,8 +35,11 @@ interface TakeoverFormProps {
 export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFormProps) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
+  const [mounted, setMounted] = useState(false);
 
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
 
   // Get USDC balance
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
@@ -65,11 +68,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       args: [BigInt(1000 * 10 ** 6)], // Mint 1000 USDC
     });
   };
-  const [showForm, setShowForm] = useState(false);
-  const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
-  const [mounted, setMounted] = useState(false);
-
-  const { address, isConnected } = useAccount();
   const { epochId } = useCurrentChannel();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
