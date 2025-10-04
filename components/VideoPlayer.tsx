@@ -11,7 +11,14 @@ interface VideoPlayerProps {
 export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
   const [showStatic, setShowStatic] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
+  const [isMuted, setIsMuted] = useState(() => {
+    // Initialize from localStorage or default to true for autoplay
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('videoMuted');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
   const previousUriRef = useRef<string | undefined>(uri);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -70,7 +77,10 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
       try {
         const data = JSON.parse(event.data);
         if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
-          setIsMuted(data.info.muted);
+          const newMutedState = data.info.muted;
+          setIsMuted(newMutedState);
+          // Save to localStorage to persist across video changes
+          localStorage.setItem('videoMuted', String(newMutedState));
         }
       } catch (e) {
         // Ignore parsing errors
