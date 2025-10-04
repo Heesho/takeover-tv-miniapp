@@ -277,26 +277,33 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                   placeholder={isValidUrl === false ? "Please enter a valid YouTube URL" : "https://www.youtube.com/watch?v=..."}
                   className="w-full px-3 py-2 bg-gray-800 text-white text-sm rounded border border-gray-700 focus:border-gray-500 focus:outline-none"
                 />
-                {isValidUrl !== null && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    {isValidUrl ? (
-                      <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              </div>
+              {/* Validation indicator below input */}
+              {isValidUrl !== null && (
+                <div className="flex items-center gap-1 mt-1 text-xs">
+                  {isValidUrl ? (
+                    <>
+                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
-                    ) : (
-                      <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                      <span className="text-gray-400">Valid YouTube URL</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
-                    )}
-                  </div>
-                )}
-              </div>
+                      <span className="text-gray-500">Invalid URL</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             <button
               onClick={handleSubmit}
               disabled={!isValidUrl || !currentPrice || !isConnected}
-              className="w-full bg-gray-200 hover:bg-white disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-semibold py-2 px-4 rounded text-sm transition-colors"
+              className="w-full bg-white hover:bg-gray-200 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold py-2 px-4 rounded text-sm transition-colors"
             >
               {!mounted
                 ? 'Loading...'
