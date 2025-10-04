@@ -40,6 +40,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const { address, isConnected } = useAccount();
@@ -85,8 +86,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const { epochId } = useCurrentChannel();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
-  const { writeContract: approve, data: approveHash, isPending: isApprovePending } = useWriteContract();
-  const { writeContract: takeover, data: takeoverHash, isPending: isTakeoverPending } = useWriteContract();
+  const { writeContract: approve, data: approveHash, isPending: isApprovePending, error: approveError } = useWriteContract();
+  const { writeContract: takeover, data: takeoverHash, isPending: isTakeoverPending, error: takeoverError } = useWriteContract();
   const [batchTxHash, setBatchTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { isLoading: isApproveLoading, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
@@ -131,17 +132,37 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   useEffect(() => {
     if (isTakeoverSuccess || isBatchSuccess) {
-      setStep('success');
+      setStep('input');
+      setYoutubeUrl('');
       refetchBalance(); // Refresh balance after takeover
       triggerHaptic('heavy'); // Celebrate with haptic feedback
+      setStatusMessage({ type: 'success', text: 'Successful Takeover!' });
+
+      // Clear message after 4 seconds
       setTimeout(() => {
-        setShowForm(false);
-        setStep('input');
-        setYoutubeUrl('');
+        setStatusMessage(null);
         onSuccess?.();
-      }, 3000);
+      }, 4000);
     }
   }, [isTakeoverSuccess, isBatchSuccess, onSuccess, refetchBalance]);
+
+  // Handle transaction errors
+  useEffect(() => {
+    if (approveError || takeoverError) {
+      setStep('input');
+      const errorMessage = (approveError || takeoverError)?.message || '';
+      const isUserRejection = errorMessage.includes('User rejected') || errorMessage.includes('user rejected');
+
+      setStatusMessage({
+        type: 'error',
+        text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed'
+      });
+
+      setTimeout(() => {
+        setStatusMessage(null);
+      }, 4000);
+    }
+  }, [approveError, takeoverError]);
 
   const handleApprove = async () => {
     if (!quoteToken || !currentPrice) return;
@@ -187,8 +208,10 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
       // Check if wallet supports batch transactions (EIP-5792)
       const supportsBatch = walletClient.request && 'wallet_sendCalls' in walletClient.request;
+      console.log('Batch transaction support:', supportsBatch);
 
       if (supportsBatch) {
+        console.log('Using batch transaction for approve + takeover');
         // Encode both approve and takeover calls
         const approveData = encodeFunctionData({
           abi: erc20ABI,
@@ -278,8 +301,27 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   };
 
   return (
-    <div className="w-full px-4 py-3 bg-black">
+    <div className="w-full bg-black">
       <div className="max-w-2xl mx-auto">
+        {/* Status Message */}
+        {statusMessage && (
+          <div className={`px-4 py-3 mb-2 flex items-center justify-center gap-2 ${
+            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            {statusMessage.type === 'success' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="text-sm font-medium">{statusMessage.text}</span>
+          </div>
+        )}
+
+        <div className="px-4 py-3">
         {step === 'input' && (
           <div className="space-y-2">
             <div>
@@ -360,26 +402,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
             </p>
           </div>
         )}
-
-        {step === 'success' && (
-          <div className="text-center py-8">
-            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <p className="text-white text-xl font-bold">Takeover Successful!</p>
-            <p className="text-gray-400 text-sm mt-2">The channel is now yours</p>
-
-            <button
-              onClick={() => shareOnFarcaster(youtubeUrl)}
-              className="mt-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors inline-flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
-              </svg>
-              Share on Farcaster
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
