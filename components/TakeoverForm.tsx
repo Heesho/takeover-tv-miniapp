@@ -263,7 +263,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   };
 
   return (
-    <div className="w-full px-4 py-3 bg-gray-900">
+    <div className="w-full px-4 py-3 bg-black">
       <div className="max-w-2xl mx-auto">
         {step === 'input' && (
           <div className="space-y-2">
