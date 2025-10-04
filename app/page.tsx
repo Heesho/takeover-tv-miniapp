@@ -77,7 +77,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Header - TV Style */}
-      <header className="bg-gradient-to-b from-gray-900 to-black px-4 py-4">
+      <header className="bg-gradient-to-b from-gray-800 to-black px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
@@ -135,7 +135,7 @@ export default function Home() {
         />
 
         {/* Footer */}
-        <footer className="bg-black px-4 py-3 mt-auto">
+        <footer className="bg-gradient-to-t from-gray-800 to-black px-4 py-3 mt-auto">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-gray-400 text-xs">
               A decentralized TV channel. Price starts high and drops to $0 over 24 hours. Take control anytime.
