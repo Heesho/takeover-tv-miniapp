@@ -44,12 +44,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   const { address, isConnected } = useAccount();
 
-  // Get USDC balance
+  // Get USDC balance with automatic refetch
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
     address: env.usdcAddress as Address,
     abi: MOCK_USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    query: {
+      refetchInterval: 3000, // Refetch every 3 seconds
+    },
   });
 
   // Mint USDC
@@ -129,6 +132,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   useEffect(() => {
     if (isTakeoverSuccess || isBatchSuccess) {
       setStep('success');
+      refetchBalance(); // Refresh balance after takeover
       triggerHaptic('heavy'); // Celebrate with haptic feedback
       setTimeout(() => {
         setShowForm(false);
@@ -137,7 +141,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         onSuccess?.();
       }, 3000);
     }
-  }, [isTakeoverSuccess, isBatchSuccess, onSuccess]);
+  }, [isTakeoverSuccess, isBatchSuccess, onSuccess, refetchBalance]);
 
   const handleApprove = async () => {
     if (!quoteToken || !currentPrice) return;
