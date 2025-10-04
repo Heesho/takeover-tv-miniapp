@@ -11,23 +11,11 @@ interface VideoPlayerProps {
 export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
   const [showStatic, setShowStatic] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(() => {
-    // Initialize from localStorage or default to true for autoplay
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('videoMuted');
-      console.log('Initializing muted state from localStorage:', saved);
-      return saved !== null ? saved === 'true' : true;
-    }
-    return true;
-  });
+  const [isMuted, setIsMuted] = useState(false);
   const previousUriRef = useRef<string | undefined>(uri);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Log muted state changes
-  useEffect(() => {
-    console.log('isMuted state changed to:', isMuted);
-  }, [isMuted]);
 
   useEffect(() => {
     // Initialize audio element for static sound
@@ -73,54 +61,6 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
     previousUriRef.current = uri;
   }, [uri, currentVideoId]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Listen for YouTube player state changes to track mute status
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== 'https://www.youtube.com') return;
-
-      try {
-        const data = JSON.parse(event.data);
-        console.log('YouTube message received:', data);
-
-        // Listen for infoDelivery events which contain volume/mute info
-        if (data.event === 'infoDelivery' && data.info) {
-          if (data.info.muted !== undefined) {
-            const newMutedState = data.info.muted;
-            console.log('YouTube player mute state changed to:', newMutedState);
-            setIsMuted(newMutedState);
-            localStorage.setItem('videoMuted', String(newMutedState));
-            console.log('Saved to localStorage:', String(newMutedState));
-          }
-          if (data.info.volume !== undefined) {
-            // Volume changes can also indicate unmute
-            const wasUnmuted = data.info.volume > 0 && data.info.muted === false;
-            console.log('Volume change detected:', data.info.volume, 'muted:', data.info.muted);
-          }
-        }
-
-        // When player is ready, start listening for info updates
-        if (data.event === 'onReady' && iframeRef.current) {
-          console.log('YouTube player ready, requesting info updates');
-          iframeRef.current.contentWindow?.postMessage(
-            JSON.stringify({ event: 'listening' }),
-            'https://www.youtube.com'
-          );
-        }
-
-        // Listen for state changes (play, pause, etc.)
-        if (data.event === 'onStateChange') {
-          console.log('YouTube state change:', data.info);
-        }
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [currentVideoId]);
 
   if (isLoading) {
     return (
