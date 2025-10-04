@@ -209,9 +209,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       // Check if wallet supports batch transactions (EIP-5792)
       const supportsBatch = walletClient.request && 'wallet_sendCalls' in walletClient.request;
       console.log('Batch transaction support:', supportsBatch);
+      console.log('WalletClient methods:', Object.keys(walletClient));
+      console.log('WalletClient.request methods:', walletClient.request ? Object.keys(walletClient.request) : 'no request');
 
-      if (supportsBatch) {
-        console.log('Using batch transaction for approve + takeover');
+      // Always try batch transaction
+      if (true) {
+        console.log('Attempting batch transaction for approve + takeover');
         // Encode both approve and takeover calls
         const approveData = encodeFunctionData({
           abi: erc20ABI,
@@ -303,24 +306,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   return (
     <div className="w-full bg-black">
       <div className="max-w-2xl mx-auto">
-        {/* Status Message */}
-        {statusMessage && (
-          <div className={`px-4 py-3 mb-2 flex items-center justify-center gap-2 ${
-            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
-          }`}>
-            {statusMessage.type === 'success' ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span className="text-sm font-medium">{statusMessage.text}</span>
-          </div>
-        )}
-
         <div className="px-4 py-3">
         {step === 'input' && (
           <div className="space-y-2">
@@ -384,6 +369,24 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 Mint $1000
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Status Message - Below input form */}
+        {statusMessage && (
+          <div className={`px-4 py-3 flex items-center justify-center gap-2 ${
+            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            {statusMessage.type === 'success' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="text-sm font-medium">{statusMessage.text}</span>
           </div>
         )}
 
