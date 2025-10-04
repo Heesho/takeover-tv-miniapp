@@ -20,7 +20,10 @@ const MOCK_USDC_ABI = [
   {
     type: 'function',
     name: 'mint',
-    inputs: [{ name: 'amount', type: 'uint256' }],
+    inputs: [
+      { name: '_to', type: 'address' },
+      { name: '_amount', type: 'uint256' }
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -65,7 +68,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       address: env.usdcAddress as Address,
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
-      args: [BigInt(1000 * 10 ** 6)], // Mint 1000 USDC
+      args: [address, BigInt(1000 * 10 ** 6)], // Mint 1000 USDC to user's address
     });
   };
   const { epochId } = useCurrentChannel();
