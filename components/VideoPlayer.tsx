@@ -68,10 +68,9 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
 
   if (showStatic) {
     return (
-      <div className="w-full aspect-video bg-black relative overflow-hidden">
-        <div className="tv-static absolute inset-0 animate-static" />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-2xl md:text-4xl font-bold opacity-80 mix-blend-difference z-10">
+      <div className="w-full aspect-video bg-black relative overflow-hidden tv-static">
+        <div className="absolute inset-0 flex items-center justify-center z-10">
+          <div className="text-white text-2xl md:text-4xl font-bold opacity-80 mix-blend-difference">
             SWITCHING...
           </div>
         </div>
@@ -81,9 +80,8 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
 
   if (!uri || !currentVideoId) {
     return (
-      <div className="w-full aspect-video bg-black relative overflow-hidden">
-        <div className="tv-static absolute inset-0" />
-        <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-full aspect-video bg-black relative overflow-hidden tv-static">
+        <div className="absolute inset-0 flex items-center justify-center z-10">
           <div className="text-center">
             <div className="text-white text-3xl md:text-5xl font-bold mb-4">
               STANDBY
