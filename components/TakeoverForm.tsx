@@ -325,7 +325,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 disabled={!address}
                 className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 px-2 py-0.5 rounded text-white transition-colors"
               >
-                Mint 1000 USDC
+                Mint $1000
               </button>
             </div>
           </div>
