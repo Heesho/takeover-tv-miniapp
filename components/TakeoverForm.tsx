@@ -197,86 +197,14 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   };
 
   const handleBatchTransaction = async () => {
-    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken || !walletClient || !address || epochId === undefined) return;
+    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken || !address || epochId === undefined) return;
 
-    try {
-      setStep('takeover');
-
-      // Calculate deadline and max payment
-      const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
-      const maxPaymentAmount = currentPrice + (currentPrice * BigInt(5)) / BigInt(100);
-
-      // Check if wallet supports batch transactions (EIP-5792)
-      const supportsBatch = walletClient.request && 'wallet_sendCalls' in walletClient.request;
-      console.log('Batch transaction support:', supportsBatch);
-      console.log('WalletClient methods:', Object.keys(walletClient));
-      console.log('WalletClient.request methods:', walletClient.request ? Object.keys(walletClient.request) : 'no request');
-
-      // Always try batch transaction
-      if (true) {
-        console.log('Attempting batch transaction for approve + takeover');
-        // Encode both approve and takeover calls
-        const approveData = encodeFunctionData({
-          abi: erc20ABI,
-          functionName: 'approve',
-          args: [env.televisionAddress, currentPrice],
-        });
-
-        const takeoverData = encodeFunctionData({
-          abi: televisionABI,
-          functionName: 'takeover',
-          args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-        });
-
-        // Send batch transaction
-        const batchId = await walletClient.request({
-          method: 'wallet_sendCalls',
-          params: [{
-            version: '1.0',
-            chainId: `0x${walletClient.chain.id.toString(16)}`,
-            from: address,
-            calls: [
-              {
-                to: quoteToken,
-                data: approveData,
-                value: '0x0',
-              },
-              {
-                to: env.televisionAddress,
-                data: takeoverData,
-                value: '0x0',
-              },
-            ],
-          }],
-        } as any);
-
-        // Get transaction hash from batch
-        const calls: any = await walletClient.request({
-          method: 'wallet_getCallsStatus',
-          params: [batchId],
-        } as any);
-
-        if (calls?.status === 'CONFIRMED' && calls.receipts?.[0]?.transactionHash) {
-          setBatchTxHash(calls.receipts[0].transactionHash as `0x${string}`);
-        }
-      } else {
-        // Fallback to sequential transactions
-        const needsApproval = !allowance || (allowance ?? 0n) < (currentPrice ?? 0n);
-        if (needsApproval) {
-          handleApprove();
-        } else {
-          handleTakeover();
-        }
-      }
-    } catch (error) {
-      console.error('Batch transaction error:', error);
-      // Fallback to sequential
-      const needsApproval = !allowance || (allowance ?? 0n) < (currentPrice ?? 0n);
-      if (needsApproval) {
-        handleApprove();
-      } else {
-        handleTakeover();
-      }
+    // Use sequential transactions instead of batch
+    const needsApproval = !allowance || allowance < currentPrice;
+    if (needsApproval) {
+      handleApprove();
+    } else {
+      handleTakeover();
     }
   };
 
