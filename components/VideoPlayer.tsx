@@ -11,8 +11,10 @@ interface VideoPlayerProps {
 export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
   const [showStatic, setShowStatic] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
   const previousUriRef = useRef<string | undefined>(uri);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     // Initialize audio element for static sound
@@ -95,13 +97,33 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
     );
   }
 
+  useEffect(() => {
+    // Listen for YouTube player state changes to track mute status
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://www.youtube.com') return;
+
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
+          setIsMuted(data.info.muted);
+        }
+      } catch (e) {
+        // Ignore parsing errors
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <div className="w-full aspect-video bg-black">
       <iframe
+        ref={iframeRef}
         key={currentVideoId}
         width="100%"
         height="100%"
-        src={getYouTubeEmbedUrl(currentVideoId)}
+        src={getYouTubeEmbedUrl(currentVideoId, isMuted)}
         title="TakeoverTV"
         frameBorder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
