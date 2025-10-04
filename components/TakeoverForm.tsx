@@ -333,8 +333,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               <span>Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}</span>
               <button
                 onClick={handleMintUsdc}
-                disabled={!address}
-                className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed cursor-pointer px-2 py-0.5 rounded text-white transition-colors"
+                disabled={!isConnected}
+                className="relative z-10 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed cursor-pointer px-2 py-0.5 rounded text-white transition-colors"
+                style={{ pointerEvents: 'auto' }}
               >
                 Mint $1000
               </button>
