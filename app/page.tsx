@@ -160,7 +160,10 @@ export default function Home() {
         <footer className="relative bg-black px-3 py-2 border-t border-gray-800 flex-shrink-0">
           <div className="absolute inset-0 scanlines opacity-5 pointer-events-none" />
           <div className="max-w-6xl mx-auto text-center relative z-10">
-            <p className="text-gray-500 text-[10px]">
+            <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">
+              Community Controlled Television
+            </p>
+            <p className="text-gray-600 text-[9px] mt-0.5">
               Price doubles on takeover then drops to $0 over 24 hours
             </p>
           </div>

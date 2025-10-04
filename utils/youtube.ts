@@ -42,7 +42,8 @@ export function isValidYouTubeUrl(url: string): boolean {
  */
 export function getYouTubeEmbedUrl(videoId: string, muted: boolean = true): string {
   console.log('Creating embed URL for video:', videoId, 'muted:', muted);
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&enablejsapi=1&loop=1&playlist=${videoId}`;
+  // Add &playsinline=1 and &autoplay=1 to ensure autoplay works on mobile and desktop
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&enablejsapi=1&loop=1&playlist=${videoId}&playsinline=1&modestbranding=1`;
 }
 
 /**
