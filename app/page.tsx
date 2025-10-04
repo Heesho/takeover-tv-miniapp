@@ -80,7 +80,7 @@ export default function Home() {
       <header className="bg-gradient-to-b from-gray-900 to-black border-b-4 border-gray-700 px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
+            <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
             <h1 className="text-white text-xl md:text-2xl font-bold tracking-wider uppercase">
               TakeoverTV
             </h1>
