@@ -77,7 +77,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Header - TV Style */}
-      <header className="bg-gradient-to-b from-gray-900 to-black border-b-4 border-gray-700 px-4 py-4">
+      <header className="bg-gradient-to-b from-gray-900 to-black px-4 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
@@ -118,7 +118,7 @@ export default function Home() {
         {/* Video Player - TV Frame */}
         <div className="w-full bg-black p-2 md:p-3">
           <div className="max-w-4xl mx-auto">
-            <div className="border-4 border-gray-800 rounded overflow-hidden bg-black">
+            <div className="overflow-hidden bg-black">
               <VideoPlayer uri={uri} isLoading={isChannelLoading} />
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function Home() {
         />
 
         {/* Footer */}
-        <footer className="bg-black border-t border-gray-800 px-4 py-3 mt-auto">
+        <footer className="bg-black px-4 py-3 mt-auto">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-gray-400 text-xs">
               A decentralized TV channel. Price starts high and drops to $0 over 24 hours. Take control anytime.
