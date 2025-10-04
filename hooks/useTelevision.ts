@@ -48,26 +48,35 @@ export function useCurrentPrice() {
 
   // Client-side price decay calculation
   useEffect(() => {
-    if (!slot0Data?.initPrice || !slot0Data?.startTime) {
+    // Extract values from tuple
+    const initPrice = slot0Data?.[0]?.initPrice || slot0Data?.initPrice;
+    const startTime = slot0Data?.[0]?.startTime || slot0Data?.startTime;
+
+    if (!initPrice || !startTime) {
       setPrice(contractPrice);
       return;
     }
 
-    const initPrice = slot0Data.initPrice as bigint;
-    const startTime = Number(slot0Data.startTime);
+    const initPriceBigInt = BigInt(initPrice);
+    const startTimeNumber = Number(startTime);
     const EPOCH_PERIOD = 24 * 60 * 60; // 24 hours in seconds
 
     const updatePrice = () => {
       const now = Math.floor(Date.now() / 1000);
-      const timePassed = now - startTime;
+      const timePassed = now - startTimeNumber;
 
       if (timePassed >= EPOCH_PERIOD) {
         setPrice(0n);
         return;
       }
 
+      if (timePassed < 0) {
+        setPrice(initPriceBigInt);
+        return;
+      }
+
       // Linear decay: price = initPrice - (initPrice * timePassed / EPOCH_PERIOD)
-      const decayedPrice = initPrice - (initPrice * BigInt(timePassed)) / BigInt(EPOCH_PERIOD);
+      const decayedPrice = initPriceBigInt - (initPriceBigInt * BigInt(timePassed)) / BigInt(EPOCH_PERIOD);
       setPrice(decayedPrice > 0n ? decayedPrice : 0n);
     };
 
