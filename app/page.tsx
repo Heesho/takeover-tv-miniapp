@@ -133,6 +133,15 @@ export default function Home() {
           quoteToken={quoteToken}
           onSuccess={refetchChannel}
         />
+
+        {/* Footer */}
+        <footer className="bg-black border-t border-gray-800 px-4 py-3 mt-auto">
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-gray-400 text-xs">
+              A decentralized TV channel. Price starts high and drops to $0 over 24 hours. Take control anytime.
+            </p>
+          </div>
+        </footer>
       </main>
     </div>
   );

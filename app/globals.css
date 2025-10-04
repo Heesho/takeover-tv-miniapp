@@ -25,6 +25,17 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Remove default blue focus rings */
+*:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #6b7280;
+  outline-offset: 2px;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
