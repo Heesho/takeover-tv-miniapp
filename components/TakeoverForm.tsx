@@ -196,18 +196,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     });
   };
 
-  const handleBatchTransaction = async () => {
-    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken || !address || epochId === undefined) return;
-
-    // Use sequential transactions instead of batch
-    const needsApproval = !allowance || allowance < currentPrice;
-    if (needsApproval) {
-      handleApprove();
-    } else {
-      handleTakeover();
-    }
-  };
-
   const handleSubmit = async () => {
     if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) return;
 
@@ -215,8 +203,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     const needsApproval = !allowance || allowance < currentPrice;
 
     if (needsApproval) {
-      // Try batch transaction first
-      handleBatchTransaction();
+      handleApprove();
     } else {
       handleTakeover();
     }
