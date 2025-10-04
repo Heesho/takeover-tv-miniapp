@@ -15,6 +15,7 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
     // Initialize from localStorage or default to true for autoplay
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('videoMuted');
+      console.log('Initializing muted state from localStorage:', saved);
       return saved !== null ? saved === 'true' : true;
     }
     return true;
@@ -22,6 +23,11 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
   const previousUriRef = useRef<string | undefined>(uri);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Log muted state changes
+  useEffect(() => {
+    console.log('isMuted state changed to:', isMuted);
+  }, [isMuted]);
 
   useEffect(() => {
     // Initialize audio element for static sound
@@ -76,20 +82,36 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
 
       try {
         const data = JSON.parse(event.data);
+        console.log('YouTube message received:', data);
 
-        // Listen for both onStateChange and infoDelivery events
-        if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
-          const newMutedState = data.info.muted;
-          setIsMuted(newMutedState);
-          localStorage.setItem('videoMuted', String(newMutedState));
+        // Listen for infoDelivery events which contain volume/mute info
+        if (data.event === 'infoDelivery' && data.info) {
+          if (data.info.muted !== undefined) {
+            const newMutedState = data.info.muted;
+            console.log('YouTube player mute state changed to:', newMutedState);
+            setIsMuted(newMutedState);
+            localStorage.setItem('videoMuted', String(newMutedState));
+            console.log('Saved to localStorage:', String(newMutedState));
+          }
+          if (data.info.volume !== undefined) {
+            // Volume changes can also indicate unmute
+            const wasUnmuted = data.info.volume > 0 && data.info.muted === false;
+            console.log('Volume change detected:', data.info.volume, 'muted:', data.info.muted);
+          }
         }
 
-        // Also request info updates when player is ready
+        // When player is ready, start listening for info updates
         if (data.event === 'onReady' && iframeRef.current) {
+          console.log('YouTube player ready, requesting info updates');
           iframeRef.current.contentWindow?.postMessage(
-            JSON.stringify({ event: 'listening', id: currentVideoId }),
+            JSON.stringify({ event: 'listening' }),
             'https://www.youtube.com'
           );
+        }
+
+        // Listen for state changes (play, pause, etc.)
+        if (data.event === 'onStateChange') {
+          console.log('YouTube state change:', data.info);
         }
       } catch (e) {
         // Ignore parsing errors
