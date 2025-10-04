@@ -63,7 +63,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [isMintSuccess, refetchBalance]);
 
   const handleMintUsdc = () => {
-    if (!address) return;
+    console.log('Mint button clicked, address:', address);
+    if (!address) {
+      console.log('No address, returning');
+      return;
+    }
+    console.log('Calling mintUsdc with:', {
+      address: env.usdcAddress,
+      args: [address, BigInt(1000 * 10 ** 6)]
+    });
     mintUsdc({
       address: env.usdcAddress as Address,
       abi: MOCK_USDC_ABI,
@@ -326,7 +334,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               <button
                 onClick={handleMintUsdc}
                 disabled={!address}
-                className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 px-2 py-0.5 rounded text-white transition-colors"
+                className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed cursor-pointer px-2 py-0.5 rounded text-white transition-colors"
               >
                 Mint $1000
               </button>
