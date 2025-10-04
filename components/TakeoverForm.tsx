@@ -261,7 +261,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         }
       } else {
         // Fallback to sequential transactions
-        const needsApproval = !allowance || allowance < currentPrice;
+        const needsApproval = !allowance || (allowance ?? 0n) < currentPrice;
         if (needsApproval) {
           handleApprove();
         } else {
@@ -271,7 +271,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     } catch (error) {
       console.error('Batch transaction error:', error);
       // Fallback to sequential
-      const needsApproval = !allowance || allowance < currentPrice;
+      const needsApproval = !allowance || (allowance ?? 0n) < currentPrice;
       if (needsApproval) {
         handleApprove();
       } else {
