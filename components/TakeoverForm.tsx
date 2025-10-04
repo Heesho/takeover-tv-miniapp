@@ -303,7 +303,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 : !isConnected
                 ? 'Connect Wallet First'
                 : currentPrice
-                ? `Takeover for $${formatPrice(currentPrice)}`
+                ? 'Takeover'
                 : 'Loading...'}
             </button>
 
