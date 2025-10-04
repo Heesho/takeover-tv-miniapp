@@ -123,7 +123,7 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
   return (
     <div className="w-full bg-gray-900 px-4 py-3">
       <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {/* Current Owner */}
           <div>
             <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
@@ -150,31 +150,12 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
           </div>
 
           {/* Current Price */}
-          <div className="text-center">
+          <div className="text-right">
             <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
               Price
             </div>
             <div className="text-white text-base font-bold">
               {price !== undefined ? `$${formatPrice(price)}` : '—'}
-            </div>
-          </div>
-
-          {/* USDC Balance & Mint */}
-          <div className="text-right">
-            <div className="text-gray-400 text-xs mb-1 uppercase tracking-wide">
-              Balance
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <div className="text-white text-xs font-mono">
-                ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}
-              </div>
-              <button
-                onClick={handleMintUsdc}
-                disabled={!address}
-                className="text-xs bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 px-2 py-0.5 rounded text-white transition-colors"
-              >
-                Mint
-              </button>
             </div>
           </div>
         </div>

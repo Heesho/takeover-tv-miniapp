@@ -9,6 +9,23 @@ import { env } from '@/utils/env';
 import { useCurrentChannel } from '@/hooks/useTelevision';
 import { shareOnFarcaster, triggerHaptic } from '@/utils/farcaster';
 
+const MOCK_USDC_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'mint',
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+] as const;
+
 interface TakeoverFormProps {
   currentPrice: bigint | undefined;
   quoteToken: Address | undefined;
@@ -18,6 +35,36 @@ interface TakeoverFormProps {
 export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFormProps) {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
+
+  const { address } = useAccount();
+
+  // Get USDC balance
+  const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
+    address: env.usdcAddress as Address,
+    abi: MOCK_USDC_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+  });
+
+  // Mint USDC
+  const { writeContract: mintUsdc, data: mintHash } = useWriteContract();
+  const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({ hash: mintHash });
+
+  useEffect(() => {
+    if (isMintSuccess) {
+      refetchBalance();
+    }
+  }, [isMintSuccess, refetchBalance]);
+
+  const handleMintUsdc = () => {
+    if (!address) return;
+    mintUsdc({
+      address: env.usdcAddress as Address,
+      abi: MOCK_USDC_ABI,
+      functionName: 'mint',
+      args: [BigInt(1000 * 10 ** 6)], // Mint 1000 USDC
+    });
+  };
   const [showForm, setShowForm] = useState(false);
   const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
   const [mounted, setMounted] = useState(false);
@@ -261,6 +308,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 ? `Takeover for $${formatPrice(currentPrice)}`
                 : 'Loading...'}
             </button>
+
+            {/* USDC Balance & Mint */}
+            <div className="flex items-center justify-between text-xs text-gray-400 pt-1">
+              <span>Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}</span>
+              <button
+                onClick={handleMintUsdc}
+                disabled={!address}
+                className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 px-2 py-0.5 rounded text-white transition-colors"
+              >
+                Mint 1000 USDC
+              </button>
+            </div>
           </div>
         )}
 
