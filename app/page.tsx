@@ -6,6 +6,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { ChannelInfo } from '@/components/ChannelInfo';
 import { TakeoverForm } from '@/components/TakeoverForm';
+import { StartOverlay } from '@/components/StartOverlay';
 import { useCurrentChannel, useCurrentPrice, useQuoteToken, useTakeoverEvents } from '@/hooks/useTelevision';
 
 type FarcasterContext = Awaited<typeof sdk.context>;
@@ -13,6 +14,7 @@ type FarcasterContext = Awaited<typeof sdk.context>;
 export default function Home() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const { reconnect } = useReconnect();
   const [farcasterUser, setFarcasterUser] = useState<FarcasterContext['user'] | null>(null);
   const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
@@ -73,6 +75,11 @@ export default function Home() {
 
     init();
   }, [mounted, isConnected, reconnect]);
+
+  // Show start overlay until user clicks
+  if (!hasStarted) {
+    return <StartOverlay onStart={() => setHasStarted(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
