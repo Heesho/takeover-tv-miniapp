@@ -76,11 +76,20 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
 
       try {
         const data = JSON.parse(event.data);
+
+        // Listen for both onStateChange and infoDelivery events
         if (data.event === 'infoDelivery' && data.info?.muted !== undefined) {
           const newMutedState = data.info.muted;
           setIsMuted(newMutedState);
-          // Save to localStorage to persist across video changes
           localStorage.setItem('videoMuted', String(newMutedState));
+        }
+
+        // Also request info updates when player is ready
+        if (data.event === 'onReady' && iframeRef.current) {
+          iframeRef.current.contentWindow?.postMessage(
+            JSON.stringify({ event: 'listening', id: currentVideoId }),
+            'https://www.youtube.com'
+          );
         }
       } catch (e) {
         // Ignore parsing errors
@@ -89,7 +98,7 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
+  }, [currentVideoId]);
 
   if (isLoading) {
     return (
