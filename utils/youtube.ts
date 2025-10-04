@@ -41,7 +41,7 @@ export function isValidYouTubeUrl(url: string): boolean {
  * Get YouTube embed URL from video ID
  */
 export function getYouTubeEmbedUrl(videoId: string): string {
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=1&rel=0`;
 }
 
 /**

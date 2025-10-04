@@ -71,7 +71,7 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
       <div className="w-full aspect-video bg-black relative overflow-hidden tv-static">
         <div className="absolute inset-0 flex items-center justify-center z-10">
           <div className="text-white text-2xl md:text-4xl font-bold opacity-80 mix-blend-difference">
-            SWITCHING...
+            TAKEOVER IN PROGRESS...
           </div>
         </div>
       </div>
