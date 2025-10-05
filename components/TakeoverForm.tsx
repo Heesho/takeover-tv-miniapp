@@ -154,19 +154,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     });
   }, [takeoverHash, isTakeoverPending, isTakeoverLoading, isTakeoverSuccess, takeoverError]);
 
-  // Set step to taking-over when transaction is pending (after wallet modal opens)
-  useEffect(() => {
-    if (isTakeoverPending && transactionStep !== 'taking-over') {
-      setTransactionStep('taking-over');
-    }
-  }, [isTakeoverPending, transactionStep]);
-
-  // Set step to approving when approve transaction is pending (after wallet modal opens)
-  useEffect(() => {
-    if (isApprovePending && transactionStep !== 'approving') {
-      setTransactionStep('approving');
-    }
-  }, [isApprovePending, transactionStep]);
+  // Don't set transaction step based on isPending - it causes re-renders that block the wallet modal
+  // Instead, use isPending directly in the UI rendering logic
 
   // Validate YouTube URL
   useEffect(() => {
@@ -411,8 +400,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // Determine what to show
   const showStatusMessage = statusMessage !== null;
-  const showInputForm = !showStatusMessage && transactionStep === 'idle';
-  const showProcessing = !showStatusMessage && (transactionStep === 'approving' || transactionStep === 'taking-over');
+  const isProcessing = isApprovePending || isApproveLoading || isTakeoverPending || isTakeoverLoading;
+  const showInputForm = !showStatusMessage && !isProcessing;
+  const showProcessing = !showStatusMessage && isProcessing;
 
   return (
     <div className="w-full px-3 py-3">
@@ -542,7 +532,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               </div>
             </div>
             <p className="text-white text-sm font-bold mb-1">
-              {transactionStep === 'approving'
+              {(isApprovePending || isApproveLoading)
                 ? 'Approving USDC...'
                 : 'Processing Takeover...'}
             </p>
