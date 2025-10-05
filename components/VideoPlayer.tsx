@@ -11,7 +11,6 @@ interface VideoPlayerProps {
 export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
   const [showStatic, setShowStatic] = useState(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
   const previousUriRef = useRef<string | undefined>(uri);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
@@ -106,10 +105,10 @@ export function VideoPlayer({ uri, isLoading }: VideoPlayerProps) {
         key={currentVideoId}
         width="100%"
         height="100%"
-        src={getYouTubeEmbedUrl(currentVideoId, isMuted)}
+        src={getYouTubeEmbedUrl(currentVideoId, false)}
         title="TakeoverTV"
         frameBorder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
         allowFullScreen
         className="w-full h-full"
       />
