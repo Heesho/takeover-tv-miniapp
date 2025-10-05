@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
@@ -60,8 +60,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
   // Account and chain
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  const { address, isConnected, chainId } = useAccount();
   const { epochId } = useCurrentChannel();
 
   // Log chain and account info
@@ -227,7 +226,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress as Address, currentPrice],
-      chainId,
     });
   }, [quoteToken, currentPrice, chainId, approveWrite]);
 
@@ -265,7 +263,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         abi: televisionABI,
         functionName: 'takeover',
         args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-        chainId,
       });
       console.log('✅ takeoverWrite called successfully');
     } catch (err) {
@@ -383,7 +380,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
-      chainId,
     });
   }, [address, chainId, mintUsdc]);
 

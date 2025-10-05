@@ -15,7 +15,8 @@
       "Bash(npm run build:*)",
       "WebFetch(domain:takeover-tv-miniapp.vercel.app)",
       "WebSearch",
-      "WebFetch(domain:miniapps.farcaster.xyz)"
+      "WebFetch(domain:miniapps.farcaster.xyz)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
