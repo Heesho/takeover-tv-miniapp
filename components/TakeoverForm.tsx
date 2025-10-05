@@ -197,19 +197,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       token: quoteToken,
       spender: env.televisionAddress,
       amount: currentPrice.toString(),
-      chainId,
     });
 
     setTransactionStep('approving');
 
+    // Don't pass chainId - let the connector handle it
     approveWrite({
       address: quoteToken,
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
-      chainId,
     });
-  }, [quoteToken, currentPrice, approveWrite, chainId]);
+  }, [quoteToken, currentPrice, approveWrite]);
 
   // Execute takeover
   const executeTakeover = useCallback(() => {
@@ -233,7 +232,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       epochId,
       deadline: deadline.toString(),
       maxPayment: maxPaymentAmount.toString(),
-      chainId,
     });
 
     if (transactionStep === 'idle') {
@@ -241,19 +239,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
 
     try {
+      // Don't pass chainId - let the connector handle it
       takeoverWrite({
         address: env.televisionAddress,
         abi: televisionABI,
         functionName: 'takeover',
         args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-        chainId,
       });
       console.log('✅ takeoverWrite called successfully');
     } catch (err) {
       console.error('❌ takeoverWrite threw error:', err);
       handleTransactionError(err as Error);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError, chainId]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
 
   // Handle approve success -> trigger takeover
   useEffect(() => {
