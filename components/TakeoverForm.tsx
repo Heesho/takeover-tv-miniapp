@@ -54,6 +54,11 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const [transactionStep, setTransactionStep] = useState<TransactionStep>('idle');
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
 
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log('📊 State:', { transactionStep, statusMessage, youtubeUrl, isValidUrl });
+  }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
+
   // Account
   const { address, isConnected } = useAccount();
   const { epochId } = useCurrentChannel();
@@ -143,7 +148,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       refetchAllowance();
       executeTakeover();
     }
-  }, [isApproveSuccess, transactionStep]);
+  }, [isApproveSuccess, transactionStep, executeTakeover, refetchAllowance]);
 
   // Handle takeover success
   useEffect(() => {
@@ -175,14 +180,14 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       console.error('❌ Approve error:', approveError);
       handleTransactionError(approveError);
     }
-  }, [approveError, transactionStep]);
+  }, [approveError, transactionStep, handleTransactionError]);
 
   useEffect(() => {
     if (takeoverError && transactionStep === 'taking-over') {
       console.error('❌ Takeover error:', takeoverError);
       handleTransactionError(takeoverError);
     }
-  }, [takeoverError, transactionStep]);
+  }, [takeoverError, transactionStep, handleTransactionError]);
 
   // Handle transaction errors
   const handleTransactionError = useCallback((error: Error) => {
@@ -255,17 +260,23 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setTransactionStep('taking-over');
     }
 
-    takeoverWrite({
-      address: env.televisionAddress,
-      abi: televisionABI,
-      functionName: 'takeover',
-      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-    });
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite]);
+    try {
+      takeoverWrite({
+        address: env.televisionAddress,
+        abi: televisionABI,
+        functionName: 'takeover',
+        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      });
+      console.log('✅ takeoverWrite called successfully');
+    } catch (err) {
+      console.error('❌ takeoverWrite threw error:', err);
+      handleTransactionError(err as Error);
+    }
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
 
   // Handle submit
   const handleSubmit = useCallback(async () => {
-    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) {
+    if (!isConnected || !isValidUrl || currentPrice === undefined || !quoteToken) {
       console.warn('⚠️ Cannot submit - missing requirements', {
         isConnected,
         isValidUrl,
@@ -277,8 +288,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
     console.log('🚀 Starting takeover flow...');
 
-    // Check if approval is needed
-    const needsApproval = !allowance || allowance < currentPrice;
+    // Check if approval is needed (not needed if price is 0)
+    const needsApproval = currentPrice > 0n && (!allowance || allowance < currentPrice);
 
     console.log('📋 Allowance check:', {
       current: allowance?.toString(),
@@ -428,13 +439,13 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              disabled={!isValidUrl || !currentPrice || !isConnected}
+              disabled={!isValidUrl || currentPrice === undefined || !isConnected}
               className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
-              style={{ color: !isValidUrl || !currentPrice || !isConnected ? undefined : '#000000' }}
+              style={{ color: !isValidUrl || currentPrice === undefined || !isConnected ? undefined : '#000000' }}
             >
               {!isConnected
                 ? 'Connect Wallet First'
-                : currentPrice
+                : currentPrice !== undefined
                 ? 'Takeover'
                 : 'Loading...'}
             </button>
@@ -470,7 +481,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 ? 'Approving USDC...'
                 : 'Processing Takeover...'}
             </p>
-            <p className="text-gray-500 text-[10px]">Confirm in your wallet</p>
+            <p className="text-gray-500 text-[10px] mb-3">Confirm in your wallet</p>
+            <button
+              onClick={() => {
+                console.log('🔄 Manual reset triggered');
+                setTransactionStep('idle');
+                resetApprove();
+                resetTakeover();
+              }}
+              className="text-gray-400 hover:text-white text-[10px] underline"
+            >
+              Cancel
+            </button>
           </div>
         )}
       </div>
