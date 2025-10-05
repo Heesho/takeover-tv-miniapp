@@ -158,15 +158,23 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
   }, [isMintSuccess, refetchBalance, resetMint]);
 
-  // Handle transaction errors
+  // Handle transaction errors with better user feedback
   const handleTransactionError = useCallback((error: Error) => {
     const errorMessage = error.message || '';
-    const isUserRejection = errorMessage.toLowerCase().includes('user rejected');
+    const isUserRejection = errorMessage.toLowerCase().includes('user rejected') ||
+                           errorMessage.toLowerCase().includes('user denied');
+    const isInsufficientFunds = errorMessage.toLowerCase().includes('insufficient');
+
+    console.error('❌ Transaction error:', { message: errorMessage, isUserRejection, isInsufficientFunds });
 
     setTransactionStep('error');
     setStatusMessage({
       type: 'error',
-      text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed',
+      text: isUserRejection
+        ? 'Transaction Rejected'
+        : isInsufficientFunds
+        ? 'Insufficient Balance'
+        : 'Transaction Failed',
     });
 
     // Reset transaction state after showing error
