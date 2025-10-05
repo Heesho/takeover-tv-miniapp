@@ -49,7 +49,6 @@ export function useCurrentPrice() {
   // Client-side price decay calculation
   useEffect(() => {
     if (!slot0Data?.initPrice || !slot0Data?.startTime) {
-      console.log('Using contract price:', contractPrice);
       setPrice(contractPrice);
       return;
     }
@@ -57,13 +56,6 @@ export function useCurrentPrice() {
     const initPrice = slot0Data.initPrice as bigint;
     const startTime = Number(slot0Data.startTime);
     const EPOCH_PERIOD = 60 * 60; // 1 hour in seconds
-
-    console.log('Price decay setup:', {
-      initPrice: initPrice.toString(),
-      startTime,
-      epochPeriod: EPOCH_PERIOD,
-      currentTime: Math.floor(Date.now() / 1000)
-    });
 
     const updatePrice = () => {
       const now = Math.floor(Date.now() / 1000);
@@ -77,13 +69,6 @@ export function useCurrentPrice() {
       // Linear decay: price = initPrice - (initPrice * timePassed / EPOCH_PERIOD)
       const decayedPrice = initPrice - (initPrice * BigInt(timePassed)) / BigInt(EPOCH_PERIOD);
       const finalPrice = decayedPrice > 0n ? decayedPrice : 0n;
-
-      console.log('Price update:', {
-        timePassed,
-        decayedPrice: decayedPrice.toString(),
-        finalPrice: finalPrice.toString()
-      });
-
       setPrice(finalPrice);
     };
 

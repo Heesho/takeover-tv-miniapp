@@ -128,22 +128,22 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     if (isApproveSuccess && step === 'approve') {
       console.log('Approve successful, waiting before triggering takeover...');
 
-      // Wait a bit for approval to fully settle
+      // Wait for approval to fully settle before triggering takeover
       setTimeout(() => {
         console.log('Now triggering takeover...');
         setShouldTakeover(true);
-        setStep('takeover');
-      }, 500);
+        // Don't set step here - let it be set when transaction is pending
+      }, 1000);
     }
   }, [isApproveSuccess, step]);
 
   useEffect(() => {
-    if (shouldTakeover && step === 'takeover') {
+    if (shouldTakeover) {
       console.log('Executing takeover...');
       setShouldTakeover(false);
       handleTakeover();
     }
-  }, [shouldTakeover, step]);
+  }, [shouldTakeover]);
 
   useEffect(() => {
     if (isTakeoverSuccess || isBatchSuccess) {
@@ -202,9 +202,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const handleTakeover = async () => {
     if (!isValidUrl || !youtubeUrl || !address || !currentPrice || epochId === undefined) return;
 
-    if (step === 'input') {
-      setStep('takeover');
-    }
+    // Don't set step to 'takeover' yet - let the transaction start first
+    // This prevents showing loading UI that might block the Farcaster wallet modal
 
     // Calculate deadline (5 minutes from now)
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
@@ -273,7 +272,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
             )}
             <span className="text-sm font-medium">{statusMessage.text}</span>
           </div>
-        ) : (step === 'approve' || step === 'takeover') ? (
+        ) : (isApprovePending || isApproveLoading || isTakeoverPending || isTakeoverLoading || isBatchLoading) ? (
           <div className="text-center py-6">
             <div className="relative inline-flex mb-3">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
@@ -284,7 +283,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               </div>
             </div>
             <p className="text-white text-sm font-bold mb-1">
-              {step === 'approve' && (isApprovePending || isApproveLoading)
+              {(isApprovePending || isApproveLoading)
                 ? 'Approving USDC...'
                 : isBatchLoading
                 ? 'Processing Batch...'
