@@ -60,13 +60,13 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
   // Account and chain
-  const { address, isConnected, chainId } = useAccount();
+  const { address, isConnected } = useAccount();
   const { epochId } = useCurrentChannel();
 
   // Log chain and account info
   useEffect(() => {
-    console.log('🔗 Account & Chain:', { address, isConnected, chainId });
-  }, [address, isConnected, chainId]);
+    console.log('🔗 Account & Chain:', { address, isConnected, chainId: env.chainId });
+  }, [address, isConnected]);
 
   // USDC Balance
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
@@ -216,7 +216,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       token: quoteToken,
       spender: env.televisionAddress,
       amount: currentPrice.toString(),
-      chainId,
     });
 
     setTransactionStep('approving');
@@ -227,7 +226,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       functionName: 'approve',
       args: [env.televisionAddress as Address, currentPrice],
     });
-  }, [quoteToken, currentPrice, chainId, approveWrite]);
+  }, [quoteToken, currentPrice, approveWrite]);
 
   // Execute takeover
   const executeTakeover = useCallback(() => {
@@ -252,7 +251,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       epochId,
       deadline: deadline.toString(),
       maxPayment: maxPaymentAmount.toString(),
-      chainId,
     });
 
     setTransactionStep('taking-over');
@@ -269,7 +267,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       console.error('❌ takeoverWrite threw error:', err);
       handleTransactionError(err as Error);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, chainId, takeoverWrite, handleTransactionError]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite, handleTransactionError]);
 
   // Handle approve success -> trigger takeover
   useEffect(() => {
@@ -372,7 +370,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('🪙 Minting USDC...', {
       to: address,
       amount: MINT_AMOUNT,
-      chainId,
     });
 
     mintUsdc({
@@ -381,7 +378,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
     });
-  }, [address, chainId, mintUsdc]);
+  }, [address, mintUsdc]);
 
   // Format price helper
   const formatPrice = (price: bigint | undefined): string => {
