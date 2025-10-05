@@ -224,7 +224,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
-      chainId: env.chainId,
     });
   }, [quoteToken, currentPrice, approveWrite]);
 
@@ -261,7 +260,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-      chainId: env.chainId,
     });
   }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite]);
 
