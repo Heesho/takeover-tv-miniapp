@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, usePublicClient, useWalletClient } from 'wagmi';
-import { parseUnits, type Address, encodeFunctionData } from 'viem';
+import { useState, useEffect, useCallback } from 'react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
 import { env } from '@/utils/env';
 import { useCurrentChannel } from '@/hooks/useTelevision';
-import { shareOnFarcaster, triggerHaptic } from '@/utils/farcaster';
+import { triggerHaptic } from '@/utils/farcaster';
 
 const MOCK_USDC_ABI = [
   {
@@ -29,6 +29,18 @@ const MOCK_USDC_ABI = [
   },
 ] as const;
 
+const USDC_DECIMALS = 6;
+const MINT_AMOUNT = 1000;
+const SLIPPAGE_PERCENT = 5;
+const DEADLINE_SECONDS = 300; // 5 minutes
+
+type TransactionStep = 'idle' | 'approving' | 'taking-over' | 'success' | 'error';
+
+interface StatusMessage {
+  type: 'success' | 'error';
+  text: string;
+}
+
 interface TakeoverFormProps {
   currentPrice: bigint | undefined;
   quoteToken: Address | undefined;
@@ -36,221 +48,334 @@ interface TakeoverFormProps {
 }
 
 export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFormProps) {
+  // Form state
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
-  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const [transactionStep, setTransactionStep] = useState<TransactionStep>('idle');
+  const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
 
+  // Account
   const { address, isConnected } = useAccount();
+  const { epochId } = useCurrentChannel();
 
-  // Get USDC balance with automatic refetch
+  // USDC Balance
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
     address: env.usdcAddress as Address,
     abi: MOCK_USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     query: {
-      refetchInterval: 3000, // Refetch every 3 seconds
+      refetchInterval: 3000,
     },
   });
 
-  // Mint USDC
-  const { writeContract: mintUsdc, data: mintHash } = useWriteContract();
-  const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({ hash: mintHash });
-
-  useEffect(() => {
-    if (isMintSuccess) {
-      refetchBalance();
-    }
-  }, [isMintSuccess, refetchBalance]);
-
-  const handleMintUsdc = () => {
-    console.log('Mint button clicked, address:', address);
-    if (!address) {
-      console.log('No address, returning');
-      return;
-    }
-    console.log('Calling mintUsdc with:', {
-      address: env.usdcAddress,
-      args: [address, BigInt(1000 * 10 ** 6)]
-    });
-    mintUsdc({
-      address: env.usdcAddress as Address,
-      abi: MOCK_USDC_ABI,
-      functionName: 'mint',
-      args: [address, BigInt(1000 * 10 ** 6)], // Mint 1000 USDC to user's address
-    });
-  };
-  const { epochId } = useCurrentChannel();
-  const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient();
-  const { writeContract: approve, data: approveHash, isPending: isApprovePending, error: approveError, reset: resetApprove } = useWriteContract();
-  const { writeContract: takeover, data: takeoverHash, isPending: isTakeoverPending, error: takeoverError, reset: resetTakeover } = useWriteContract();
-  const [batchTxHash, setBatchTxHash] = useState<`0x${string}` | undefined>(undefined);
-
-  const { isLoading: isApproveLoading, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
-    hash: approveHash,
-  });
-
-  const { isLoading: isTakeoverLoading, isSuccess: isTakeoverSuccess } = useWaitForTransactionReceipt({
-    hash: takeoverHash,
-  });
-
-  const { isLoading: isBatchLoading, isSuccess: isBatchSuccess } = useWaitForTransactionReceipt({
-    hash: batchTxHash,
-  });
-
-  // Check current allowance
-  const { data: allowance } = useReadContract({
+  // Allowance check
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: quoteToken,
     abi: erc20ABI,
     functionName: 'allowance',
     args: address && quoteToken ? [address, env.televisionAddress] : undefined,
   });
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Mint USDC transaction
+  const {
+    writeContract: mintUsdc,
+    data: mintHash,
+    reset: resetMint,
+  } = useWriteContract();
 
+  const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
+    hash: mintHash
+  });
+
+  // Approve transaction
+  const {
+    writeContract: approveWrite,
+    data: approveHash,
+    error: approveError,
+    reset: resetApprove,
+  } = useWriteContract();
+
+  const {
+    isLoading: isApproveLoading,
+    isSuccess: isApproveSuccess
+  } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
+
+  // Takeover transaction
+  const {
+    writeContract: takeoverWrite,
+    data: takeoverHash,
+    error: takeoverError,
+    reset: resetTakeover,
+  } = useWriteContract();
+
+  const {
+    isLoading: isTakeoverLoading,
+    isSuccess: isTakeoverSuccess
+  } = useWaitForTransactionReceipt({
+    hash: takeoverHash,
+  });
+
+  // Validate YouTube URL
   useEffect(() => {
     if (youtubeUrl) {
-      const valid = isValidYouTubeUrl(youtubeUrl);
-      setIsValidUrl(valid);
+      setIsValidUrl(isValidYouTubeUrl(youtubeUrl));
     } else {
       setIsValidUrl(null);
     }
   }, [youtubeUrl]);
 
+  // Handle mint success
   useEffect(() => {
-    if (isApproveSuccess && step === 'approve') {
-      setStep('takeover');
-      handleTakeover();
+    if (isMintSuccess) {
+      refetchBalance();
+      resetMint();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isApproveSuccess, step]);
+  }, [isMintSuccess, refetchBalance, resetMint]);
 
+  // Handle approve success -> trigger takeover
   useEffect(() => {
-    if (isTakeoverSuccess || isBatchSuccess) {
-      setStep('input');
+    if (isApproveSuccess && transactionStep === 'approving') {
+      console.log('✅ Approve successful, starting takeover...');
+      setTransactionStep('taking-over');
+      refetchAllowance();
+      executeTakeover();
+    }
+  }, [isApproveSuccess, transactionStep]);
+
+  // Handle takeover success
+  useEffect(() => {
+    if (isTakeoverSuccess && transactionStep === 'taking-over') {
+      console.log('✅ Takeover successful!');
+      setTransactionStep('success');
       setYoutubeUrl('');
-      refetchBalance(); // Refresh balance after takeover
-      triggerHaptic('heavy'); // Celebrate with haptic feedback
-      setStatusMessage({ type: 'success', text: 'Successful Takeover!' });
-
-      // Clear message after 4 seconds
-      setTimeout(() => {
-        setStatusMessage(null);
-        onSuccess?.();
-      }, 4000);
-    }
-  }, [isTakeoverSuccess, isBatchSuccess, onSuccess, refetchBalance]);
-
-  // Handle transaction errors
-  // Only show error if we're not in input step (prevents showing stale errors on new attempts)
-  useEffect(() => {
-    if ((approveError || takeoverError) && step !== 'input') {
-      setStep('input');
-      const errorMessage = (approveError || takeoverError)?.message || '';
-      const isUserRejection = errorMessage.includes('User rejected') || errorMessage.includes('user rejected');
+      refetchBalance();
+      triggerHaptic('heavy');
 
       setStatusMessage({
-        type: 'error',
-        text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed'
+        type: 'success',
+        text: 'Successful Takeover!'
       });
 
       setTimeout(() => {
         setStatusMessage(null);
+        setTransactionStep('idle');
+        onSuccess?.();
       }, 4000);
     }
-  }, [approveError, takeoverError, step]);
+  }, [isTakeoverSuccess, transactionStep, onSuccess, refetchBalance]);
 
-  const handleApprove = async () => {
-    if (!quoteToken || !currentPrice) return;
+  // Handle errors
+  useEffect(() => {
+    if (approveError && transactionStep === 'approving') {
+      console.error('❌ Approve error:', approveError);
+      handleTransactionError(approveError);
+    }
+  }, [approveError, transactionStep]);
 
-    setStep('approve');
-    approve({
+  useEffect(() => {
+    if (takeoverError && transactionStep === 'taking-over') {
+      console.error('❌ Takeover error:', takeoverError);
+      handleTransactionError(takeoverError);
+    }
+  }, [takeoverError, transactionStep]);
+
+  // Handle transaction errors
+  const handleTransactionError = useCallback((error: Error) => {
+    const errorMessage = error.message || '';
+    const isUserRejection = errorMessage.toLowerCase().includes('user rejected');
+
+    setTransactionStep('error');
+    setStatusMessage({
+      type: 'error',
+      text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed',
+    });
+
+    setTimeout(() => {
+      setStatusMessage(null);
+      setTransactionStep('idle');
+    }, 4000);
+  }, []);
+
+  // Execute approve
+  const executeApprove = useCallback(() => {
+    if (!quoteToken || !currentPrice) {
+      console.error('❌ Missing quoteToken or currentPrice');
+      return;
+    }
+
+    console.log('🔄 Executing approve...', {
+      token: quoteToken,
+      spender: env.televisionAddress,
+      amount: currentPrice.toString(),
+    });
+
+    setTransactionStep('approving');
+
+    approveWrite({
       address: quoteToken,
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
       chainId: env.chainId,
     });
-  };
+  }, [quoteToken, currentPrice, approveWrite]);
 
-  const handleTakeover = async () => {
-    if (!isValidUrl || !youtubeUrl || !address || !currentPrice || epochId === undefined) return;
-
-    if (step === 'input') {
-      setStep('takeover');
+  // Execute takeover
+  const executeTakeover = useCallback(() => {
+    if (!isValidUrl || !youtubeUrl || !address || !currentPrice || epochId === undefined) {
+      console.error('❌ Missing required parameters for takeover', {
+        isValidUrl,
+        youtubeUrl,
+        address,
+        currentPrice: currentPrice?.toString(),
+        epochId,
+      });
+      return;
     }
 
-    // Calculate deadline (5 minutes from now)
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
-    // Add 5% slippage to current price
-    const maxPaymentAmount = currentPrice + (currentPrice * BigInt(5)) / BigInt(100);
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS);
+    const maxPaymentAmount = currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
 
-    takeover({
+    console.log('🔄 Executing takeover...', {
+      url: youtubeUrl,
+      recipient: address,
+      epochId,
+      deadline: deadline.toString(),
+      maxPayment: maxPaymentAmount.toString(),
+    });
+
+    if (transactionStep === 'idle') {
+      setTransactionStep('taking-over');
+    }
+
+    takeoverWrite({
       address: env.televisionAddress,
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
       chainId: env.chainId,
     });
-  };
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite]);
 
-  const handleSubmit = async () => {
-    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) return;
+  // Handle submit
+  const handleSubmit = useCallback(async () => {
+    if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) {
+      console.warn('⚠️ Cannot submit - missing requirements', {
+        isConnected,
+        isValidUrl,
+        currentPrice: currentPrice?.toString(),
+        quoteToken,
+      });
+      return;
+    }
 
-    // Clear any status messages from previous attempts
-    setStatusMessage(null);
+    console.log('🚀 Starting takeover flow...');
 
-    // Reset any previous errors
+    // Reset any previous transaction state
     resetApprove();
     resetTakeover();
 
     // Check if approval is needed
     const needsApproval = !allowance || allowance < currentPrice;
 
-    if (needsApproval) {
-      handleApprove();
-    } else {
-      handleTakeover();
-    }
-  };
+    console.log('📋 Allowance check:', {
+      current: allowance?.toString(),
+      needed: currentPrice.toString(),
+      needsApproval,
+    });
 
-  const formatPrice = (price: bigint | undefined) => {
+    if (needsApproval) {
+      executeApprove();
+    } else {
+      executeTakeover();
+    }
+  }, [
+    isConnected,
+    isValidUrl,
+    currentPrice,
+    quoteToken,
+    allowance,
+    resetApprove,
+    resetTakeover,
+    executeApprove,
+    executeTakeover,
+  ]);
+
+  // Handle mint USDC
+  const handleMintUsdc = useCallback(() => {
+    if (!address) {
+      console.warn('⚠️ No address for minting');
+      return;
+    }
+
+    console.log('🪙 Minting USDC...', {
+      to: address,
+      amount: MINT_AMOUNT,
+    });
+
+    mintUsdc({
+      address: env.usdcAddress as Address,
+      abi: MOCK_USDC_ABI,
+      functionName: 'mint',
+      args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
+    });
+  }, [address, mintUsdc]);
+
+  // Format price helper
+  const formatPrice = (price: bigint | undefined): string => {
     if (!price) return '0.00';
-    const divisor = BigInt(10 ** 6); // USDC decimals
+
+    const divisor = BigInt(10 ** USDC_DECIMALS);
     const integerPart = price / divisor;
     const fractionalPart = price % divisor;
-    const fractionalStr = fractionalPart.toString().padStart(6, '0');
+    const fractionalStr = fractionalPart.toString().padStart(USDC_DECIMALS, '0');
+
     return `${integerPart}.${fractionalStr.slice(0, 2)}`;
   };
+
+  // Determine what to show
+  const showStatusMessage = statusMessage !== null;
+  const showInputForm = !showStatusMessage && transactionStep === 'idle';
+  const showProcessing = !showStatusMessage && (transactionStep === 'approving' || transactionStep === 'taking-over');
 
   return (
     <div className="w-full px-3 py-3">
       <div className="max-w-6xl mx-auto">
-        {/* Status Message - Replaces input form */}
-        {statusMessage ? (
-          <div className={`px-4 py-3 flex items-center justify-center gap-2 ${
-            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
-          }`}>
+        {/* Status Message */}
+        {showStatusMessage && (
+          <div
+            className={`px-4 py-3 flex items-center justify-center gap-2 ${
+              statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          >
             {statusMessage.type === 'success' ? (
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
             ) : (
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             )}
             <span className="text-sm font-medium">{statusMessage.text}</span>
           </div>
-        ) : step === 'input' ? (
+        )}
+
+        {/* Input Form */}
+        {showInputForm && (
           <div className="space-y-2">
-            {/* Section Header with inline validation */}
+            {/* Header with validation */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -261,21 +386,29 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 </h3>
               </div>
 
-              {/* Validation indicator inline with header */}
+              {/* Validation indicator */}
               <div className="flex items-center gap-1.5">
                 {isValidUrl !== null && (
                   <>
                     {isValidUrl ? (
                       <>
                         <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <span className="text-green-500 text-[10px] font-medium">Valid URL</span>
                       </>
                     ) : (
                       <>
                         <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                         <span className="text-red-500 text-[10px] font-medium">Invalid URL</span>
                       </>
@@ -285,6 +418,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               </div>
             </div>
 
+            {/* URL Input */}
             <input
               id="youtube-url"
               type="text"
@@ -294,35 +428,37 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               className="w-full px-3 py-2 bg-gray-800/50 text-white text-xs rounded border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-600"
             />
 
+            {/* Submit Button */}
             <button
               onClick={handleSubmit}
               disabled={!isValidUrl || !currentPrice || !isConnected}
               className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
               style={{ color: !isValidUrl || !currentPrice || !isConnected ? undefined : '#000000' }}
             >
-              {!mounted
-                ? 'Loading...'
-                : !isConnected
+              {!isConnected
                 ? 'Connect Wallet First'
                 : currentPrice
                 ? 'Takeover'
                 : 'Loading...'}
             </button>
 
-            {/* USDC Balance & Mint */}
+            {/* Balance & Mint */}
             <div className="flex items-center justify-between text-[10px] pt-1">
-              <span className="text-gray-500">Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}</span>
+              <span className="text-gray-500">
+                Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}
+              </span>
               <button
                 onClick={handleMintUsdc}
                 className="bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
               >
-                Mint $1000
+                Mint ${MINT_AMOUNT}
               </button>
             </div>
           </div>
-        ) : null}
+        )}
 
-        {(step === 'approve' || step === 'takeover') && (
+        {/* Processing State */}
+        {showProcessing && (
           <div className="text-center py-6">
             <div className="relative inline-flex mb-3">
               <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
@@ -333,15 +469,11 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               </div>
             </div>
             <p className="text-white text-sm font-bold mb-1">
-              {step === 'approve' && (isApprovePending || isApproveLoading)
+              {transactionStep === 'approving'
                 ? 'Approving USDC...'
-                : isBatchLoading
-                ? 'Processing Batch...'
                 : 'Processing Takeover...'}
             </p>
-            <p className="text-gray-500 text-[10px]">
-              Confirm in your wallet
-            </p>
+            <p className="text-gray-500 text-[10px]">Confirm in your wallet</p>
           </div>
         )}
       </div>
