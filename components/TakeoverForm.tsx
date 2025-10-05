@@ -140,6 +140,91 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
   }, [isMintSuccess, refetchBalance, resetMint]);
 
+  // Handle transaction errors
+  const handleTransactionError = useCallback((error: Error) => {
+    const errorMessage = error.message || '';
+    const isUserRejection = errorMessage.toLowerCase().includes('user rejected');
+
+    setTransactionStep('error');
+    setStatusMessage({
+      type: 'error',
+      text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed',
+    });
+
+    // Reset transaction state after showing error
+    setTimeout(() => {
+      setStatusMessage(null);
+      setTransactionStep('idle');
+      resetApprove();
+      resetTakeover();
+    }, 4000);
+  }, [resetApprove, resetTakeover]);
+
+  // Execute approve
+  const executeApprove = useCallback(() => {
+    if (!quoteToken || !currentPrice) {
+      console.error('❌ Missing quoteToken or currentPrice');
+      return;
+    }
+
+    console.log('🔄 Executing approve...', {
+      token: quoteToken,
+      spender: env.televisionAddress,
+      amount: currentPrice.toString(),
+    });
+
+    setTransactionStep('approving');
+
+    approveWrite({
+      address: quoteToken,
+      abi: erc20ABI,
+      functionName: 'approve',
+      args: [env.televisionAddress, currentPrice],
+    });
+  }, [quoteToken, currentPrice, approveWrite]);
+
+  // Execute takeover
+  const executeTakeover = useCallback(() => {
+    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined) {
+      console.error('❌ Missing required parameters for takeover', {
+        isValidUrl,
+        youtubeUrl,
+        address,
+        currentPrice: currentPrice?.toString(),
+        epochId,
+      });
+      return;
+    }
+
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS);
+    const maxPaymentAmount = currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
+
+    console.log('🔄 Executing takeover...', {
+      url: youtubeUrl,
+      recipient: address,
+      epochId,
+      deadline: deadline.toString(),
+      maxPayment: maxPaymentAmount.toString(),
+    });
+
+    if (transactionStep === 'idle') {
+      setTransactionStep('taking-over');
+    }
+
+    try {
+      takeoverWrite({
+        address: env.televisionAddress,
+        abi: televisionABI,
+        functionName: 'takeover',
+        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      });
+      console.log('✅ takeoverWrite called successfully');
+    } catch (err) {
+      console.error('❌ takeoverWrite threw error:', err);
+      handleTransactionError(err as Error);
+    }
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
+
   // Handle approve success -> trigger takeover
   useEffect(() => {
     if (isApproveSuccess && transactionStep === 'approving') {
@@ -188,91 +273,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       handleTransactionError(takeoverError);
     }
   }, [takeoverError, transactionStep, handleTransactionError]);
-
-  // Handle transaction errors
-  const handleTransactionError = useCallback((error: Error) => {
-    const errorMessage = error.message || '';
-    const isUserRejection = errorMessage.toLowerCase().includes('user rejected');
-
-    setTransactionStep('error');
-    setStatusMessage({
-      type: 'error',
-      text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed',
-    });
-
-    // Reset transaction state after showing error
-    setTimeout(() => {
-      setStatusMessage(null);
-      setTransactionStep('idle');
-      resetApprove();
-      resetTakeover();
-    }, 4000);
-  }, [resetApprove, resetTakeover]);
-
-  // Execute approve
-  const executeApprove = useCallback(() => {
-    if (!quoteToken || !currentPrice) {
-      console.error('❌ Missing quoteToken or currentPrice');
-      return;
-    }
-
-    console.log('🔄 Executing approve...', {
-      token: quoteToken,
-      spender: env.televisionAddress,
-      amount: currentPrice.toString(),
-    });
-
-    setTransactionStep('approving');
-
-    approveWrite({
-      address: quoteToken,
-      abi: erc20ABI,
-      functionName: 'approve',
-      args: [env.televisionAddress, currentPrice],
-    });
-  }, [quoteToken, currentPrice, approveWrite]);
-
-  // Execute takeover
-  const executeTakeover = useCallback(() => {
-    if (!isValidUrl || !youtubeUrl || !address || !currentPrice || epochId === undefined) {
-      console.error('❌ Missing required parameters for takeover', {
-        isValidUrl,
-        youtubeUrl,
-        address,
-        currentPrice: currentPrice?.toString(),
-        epochId,
-      });
-      return;
-    }
-
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS);
-    const maxPaymentAmount = currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
-
-    console.log('🔄 Executing takeover...', {
-      url: youtubeUrl,
-      recipient: address,
-      epochId,
-      deadline: deadline.toString(),
-      maxPayment: maxPaymentAmount.toString(),
-    });
-
-    if (transactionStep === 'idle') {
-      setTransactionStep('taking-over');
-    }
-
-    try {
-      takeoverWrite({
-        address: env.televisionAddress,
-        abi: televisionABI,
-        functionName: 'takeover',
-        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-      });
-      console.log('✅ takeoverWrite called successfully');
-    } catch (err) {
-      console.error('❌ takeoverWrite threw error:', err);
-      handleTransactionError(err as Error);
-    }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
 
   // Handle submit
   const handleSubmit = useCallback(async () => {
