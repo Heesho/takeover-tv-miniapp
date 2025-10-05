@@ -149,8 +149,16 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   // Handle transaction errors
   useEffect(() => {
     if (approveError || takeoverError) {
+      const error = approveError || takeoverError;
+      console.error('Transaction error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        cause: error?.cause,
+        name: error?.name
+      });
+
       setStep('input');
-      const errorMessage = (approveError || takeoverError)?.message || '';
+      const errorMessage = error?.message || '';
       const isUserRejection = errorMessage.includes('User rejected') || errorMessage.includes('user rejected');
 
       setStatusMessage({
@@ -187,6 +195,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
     // Add 5% slippage to current price
     const maxPaymentAmount = currentPrice + (currentPrice * BigInt(5)) / BigInt(100);
+
+    console.log('Takeover transaction params:', {
+      youtubeUrl,
+      channelOwner: address,
+      epochId,
+      deadline: deadline.toString(),
+      maxPaymentAmount: maxPaymentAmount.toString(),
+      currentPrice: currentPrice.toString()
+    });
 
     takeover({
       address: env.televisionAddress,
