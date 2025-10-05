@@ -128,6 +128,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setStep('takeover');
       handleTakeover();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isApproveSuccess, step]);
 
   useEffect(() => {
@@ -147,8 +148,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [isTakeoverSuccess, isBatchSuccess, onSuccess, refetchBalance]);
 
   // Handle transaction errors
+  // Only show error if we're not in input step (prevents showing stale errors on new attempts)
   useEffect(() => {
-    if (approveError || takeoverError) {
+    if ((approveError || takeoverError) && step !== 'input') {
       setStep('input');
       const errorMessage = (approveError || takeoverError)?.message || '';
       const isUserRejection = errorMessage.includes('User rejected') || errorMessage.includes('user rejected');
@@ -162,7 +164,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         setStatusMessage(null);
       }, 4000);
     }
-  }, [approveError, takeoverError]);
+  }, [approveError, takeoverError, step]);
 
   const handleApprove = async () => {
     if (!quoteToken || !currentPrice) return;
@@ -200,6 +202,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   const handleSubmit = async () => {
     if (!isConnected || !isValidUrl || !currentPrice || !quoteToken) return;
+
+    // Clear any status messages from previous attempts
+    setStatusMessage(null);
 
     // Reset any previous errors
     resetApprove();
