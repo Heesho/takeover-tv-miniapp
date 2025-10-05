@@ -121,7 +121,7 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
   }, [owner]);
 
   return (
-    <div className="w-full px-3 py-3 border-b border-gray-800">
+    <div className="w-full px-3 py-2">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 gap-3">
           {/* Current Owner */}
