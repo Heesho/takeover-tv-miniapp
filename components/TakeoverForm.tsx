@@ -42,7 +42,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [shouldTakeover, setShouldTakeover] = useState(false);
 
   const { address, isConnected } = useAccount();
 
@@ -126,24 +125,10 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   useEffect(() => {
     if (isApproveSuccess && step === 'approve') {
-      console.log('Approve successful, waiting before triggering takeover...');
-
-      // Wait for approval to fully settle before triggering takeover
-      setTimeout(() => {
-        console.log('Now triggering takeover...');
-        setShouldTakeover(true);
-        // Don't set step here - let it be set when transaction is pending
-      }, 1000);
-    }
-  }, [isApproveSuccess, step]);
-
-  useEffect(() => {
-    if (shouldTakeover) {
-      console.log('Executing takeover...');
-      setShouldTakeover(false);
+      setStep('takeover');
       handleTakeover();
     }
-  }, [shouldTakeover]);
+  }, [isApproveSuccess, step]);
 
   useEffect(() => {
     if (isTakeoverSuccess || isBatchSuccess) {
@@ -164,16 +149,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   // Handle transaction errors
   useEffect(() => {
     if (approveError || takeoverError) {
-      const error = approveError || takeoverError;
-      console.error('Transaction error:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        cause: error?.cause,
-        name: error?.name
-      });
-
       setStep('input');
-      const errorMessage = error?.message || '';
+      const errorMessage = (approveError || takeoverError)?.message || '';
       const isUserRejection = errorMessage.includes('User rejected') || errorMessage.includes('user rejected');
 
       setStatusMessage({
@@ -196,34 +173,28 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
+      chainId: env.chainId,
     });
   };
 
   const handleTakeover = async () => {
     if (!isValidUrl || !youtubeUrl || !address || !currentPrice || epochId === undefined) return;
 
-    // Don't set step to 'takeover' yet - let the transaction start first
-    // This prevents showing loading UI that might block the Farcaster wallet modal
+    if (step === 'input') {
+      setStep('takeover');
+    }
 
     // Calculate deadline (5 minutes from now)
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 300);
     // Add 5% slippage to current price
     const maxPaymentAmount = currentPrice + (currentPrice * BigInt(5)) / BigInt(100);
 
-    console.log('Takeover transaction params:', {
-      youtubeUrl,
-      channelOwner: address,
-      epochId,
-      deadline: deadline.toString(),
-      maxPaymentAmount: maxPaymentAmount.toString(),
-      currentPrice: currentPrice.toString()
-    });
-
     takeover({
       address: env.televisionAddress,
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      chainId: env.chainId,
     });
   };
 
@@ -256,9 +227,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   return (
     <div className="w-full px-3 py-3">
       <div className="max-w-6xl mx-auto">
-        {/* Status Message - Replaces form when showing */}
+        {/* Status Message - Replaces input form */}
         {statusMessage ? (
-          <div className={`px-4 py-6 flex items-center justify-center gap-2 ${
+          <div className={`px-4 py-3 flex items-center justify-center gap-2 ${
             statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
           }`}>
             {statusMessage.type === 'success' ? (
@@ -272,28 +243,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
             )}
             <span className="text-sm font-medium">{statusMessage.text}</span>
           </div>
-        ) : (isApprovePending || isApproveLoading || isTakeoverPending || isTakeoverLoading || isBatchLoading) ? (
-          <div className="text-center py-6">
-            <div className="relative inline-flex mb-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-white text-sm font-bold mb-1">
-              {(isApprovePending || isApproveLoading)
-                ? 'Approving USDC...'
-                : isBatchLoading
-                ? 'Processing Batch...'
-                : 'Processing Takeover...'}
-            </p>
-            <p className="text-gray-500 text-[10px]">
-              Confirm in your wallet
-            </p>
-          </div>
-        ) : (
+        ) : step === 'input' ? (
           <div className="space-y-2">
             {/* Section Header with inline validation */}
             <div className="flex items-center justify-between mb-2">
@@ -364,6 +314,29 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 Mint $1000
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {(step === 'approve' || step === 'takeover') && (
+          <div className="text-center py-6">
+            <div className="relative inline-flex mb-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-white text-sm font-bold mb-1">
+              {step === 'approve' && (isApprovePending || isApproveLoading)
+                ? 'Approving USDC...'
+                : isBatchLoading
+                ? 'Processing Batch...'
+                : 'Processing Takeover...'}
+            </p>
+            <p className="text-gray-500 text-[10px]">
+              Confirm in your wallet
+            </p>
           </div>
         )}
       </div>
