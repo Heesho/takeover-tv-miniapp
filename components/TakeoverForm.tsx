@@ -275,6 +275,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
   }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite, handleTransactionError]);
 
+  // Track transaction steps based on pending/loading states
+  useEffect(() => {
+    if (isApprovePending || isApproveLoading) {
+      setTransactionStep('approving');
+    } else if (isTakeoverPending || isTakeoverLoading) {
+      setTransactionStep('taking-over');
+    }
+  }, [isApprovePending, isApproveLoading, isTakeoverPending, isTakeoverLoading]);
+
   // Handle approve success -> trigger takeover
   useEffect(() => {
     if (isApproveSuccess && transactionStep === 'approving') {

@@ -62,18 +62,21 @@ export default function Home() {
 
         // Auto-connect to Farcaster wallet using the farcasterMiniApp connector
         // Note: connect() returns void in wagmi v2, connection status tracked via useAccount
+        // CRITICAL: The connector ID is 'farcaster' NOT 'farcasterMiniApp'
         if (!isConnected) {
           try {
             const farcasterConnector = connectors.find(
-              (connector) => connector.id === 'farcasterMiniApp'
+              (connector) => connector.id === 'farcaster'
             );
 
             if (farcasterConnector) {
-              console.log('🔌 Connecting to Farcaster wallet...');
+              console.log('🔌 Connecting to Farcaster wallet...', { connectorId: farcasterConnector.id });
               await connect({ connector: farcasterConnector });
               console.log('✅ Connected to Farcaster wallet');
             } else {
-              console.warn('⚠️ Farcaster connector not found');
+              console.error('❌ Farcaster connector not found. Available connectors:',
+                connectors.map(c => ({ id: c.id, name: c.name }))
+              );
             }
           } catch (error) {
             console.error('❌ Failed to connect to Farcaster wallet:', error);
