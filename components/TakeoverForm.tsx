@@ -243,7 +243,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       console.log('✅ Approve successful, starting takeover...');
       setTransactionStep('taking-over');
       refetchAllowance();
-      executeTakeover();
+
+      // Add a small delay to let the connector stabilize after approve
+      setTimeout(() => {
+        console.log('🔄 Triggering takeover after approve...');
+        executeTakeover();
+      }, 500);
     }
   }, [isApproveSuccess, transactionStep, executeTakeover, refetchAllowance]);
 

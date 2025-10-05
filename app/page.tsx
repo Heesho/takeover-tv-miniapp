@@ -58,14 +58,23 @@ export default function Home() {
             );
 
             if (farcasterConnector) {
-              await connect({ connector: farcasterConnector });
-              console.log('Connected to Farcaster wallet');
+              console.log('🔌 Connecting to Farcaster wallet...', {
+                connectorId: farcasterConnector.id,
+                connectorName: farcasterConnector.name,
+              });
+              const result = await connect({ connector: farcasterConnector });
+              console.log('✅ Connected to Farcaster wallet', {
+                accounts: result.accounts,
+                chainId: result.chainId,
+              });
             } else {
               console.error('Farcaster connector not found');
             }
           } catch (error) {
             console.error('Failed to connect to Farcaster wallet:', error);
           }
+        } else {
+          console.log('ℹ️ Already connected, skipping connect()');
         }
 
         // Call ready() to hide splash screen - MUST be called after initialization
