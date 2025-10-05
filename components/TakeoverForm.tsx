@@ -125,10 +125,23 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   const {
     isLoading: isTakeoverLoading,
-    isSuccess: isTakeoverSuccess
+    isSuccess: isTakeoverSuccess,
+    error: receiptError
   } = useWaitForTransactionReceipt({
     hash: takeoverHash,
   });
+
+  // Debug receipt state
+  useEffect(() => {
+    if (takeoverHash) {
+      console.log('📝 Receipt state:', {
+        hash: takeoverHash,
+        isLoading: isTakeoverLoading,
+        isSuccess: isTakeoverSuccess,
+        error: receiptError?.message,
+      });
+    }
+  }, [takeoverHash, isTakeoverLoading, isTakeoverSuccess, receiptError]);
 
   // Debug takeover transaction state
   useEffect(() => {
@@ -167,12 +180,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
     console.error('❌ Transaction error:', { message: errorMessage, isUserRejection, isInsufficientFunds });
 
+    // For user rejections, just reset silently without showing error state
+    if (isUserRejection) {
+      setTransactionStep('idle');
+      resetApprove();
+      resetTakeover();
+      return;
+    }
+
+    // For actual errors, show the error message
     setTransactionStep('error');
     setStatusMessage({
       type: 'error',
-      text: isUserRejection
-        ? 'Transaction Rejected'
-        : isInsufficientFunds
+      text: isInsufficientFunds
         ? 'Insufficient Balance'
         : 'Transaction Failed',
     });
@@ -203,10 +223,10 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
     // Don't pass chainId - let the connector handle it
     approveWrite({
-      address: quoteToken,
+      address: quoteToken as Address,
       abi: erc20ABI,
       functionName: 'approve',
-      args: [env.televisionAddress, currentPrice],
+      args: [env.televisionAddress as Address, currentPrice],
     });
   }, [quoteToken, currentPrice, approveWrite]);
 
@@ -224,7 +244,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
 
     const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS);
-    const maxPaymentAmount = currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
+    // For $0 price, no slippage needed
+    const maxPaymentAmount = currentPrice === 0n ? 0n : currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
 
     console.log('🔄 Executing takeover...', {
       url: youtubeUrl,
@@ -234,14 +255,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       maxPayment: maxPaymentAmount.toString(),
     });
 
-    if (transactionStep === 'idle') {
-      setTransactionStep('taking-over');
-    }
+    setTransactionStep('taking-over');
 
     try {
       // Don't pass chainId - let the connector handle it
       takeoverWrite({
-        address: env.televisionAddress,
+        address: env.televisionAddress as Address,
         abi: televisionABI,
         functionName: 'takeover',
         args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
@@ -251,13 +270,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       console.error('❌ takeoverWrite threw error:', err);
       handleTransactionError(err as Error);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite, handleTransactionError]);
 
   // Handle approve success -> trigger takeover
   useEffect(() => {
     if (isApproveSuccess && transactionStep === 'approving') {
       console.log('✅ Approve successful, starting takeover...');
-      setTransactionStep('taking-over');
       refetchAllowance();
 
       // Add a small delay to let the connector stabilize after approve
@@ -296,7 +314,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   useEffect(() => {
     if (approveError && transactionStep === 'approving') {
       console.error('❌ Approve error:', approveError);
-      console.error('Full error object:', JSON.stringify(approveError, null, 2));
       handleTransactionError(approveError);
     }
   }, [approveError, transactionStep, handleTransactionError]);
@@ -304,13 +321,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   useEffect(() => {
     if (takeoverError && transactionStep === 'taking-over') {
       console.error('❌ Takeover error:', takeoverError);
-      console.error('Full error object:', JSON.stringify(takeoverError, null, 2));
-      console.error('Error cause:', takeoverError?.cause);
-      console.error('Error details:', {
-        message: takeoverError?.message,
-        name: takeoverError?.name,
-        cause: takeoverError?.cause,
-      });
       handleTransactionError(takeoverError);
     }
   }, [takeoverError, transactionStep, handleTransactionError]);
