@@ -217,18 +217,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       token: quoteToken,
       spender: env.televisionAddress,
       amount: currentPrice.toString(),
+      chainId,
     });
 
     setTransactionStep('approving');
 
-    // Don't pass chainId - let the connector handle it
     approveWrite({
       address: quoteToken as Address,
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress as Address, currentPrice],
+      chainId,
     });
-  }, [quoteToken, currentPrice, approveWrite]);
+  }, [quoteToken, currentPrice, chainId, approveWrite]);
 
   // Execute takeover
   const executeTakeover = useCallback(() => {
@@ -253,24 +254,25 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       epochId,
       deadline: deadline.toString(),
       maxPayment: maxPaymentAmount.toString(),
+      chainId,
     });
 
     setTransactionStep('taking-over');
 
     try {
-      // Don't pass chainId - let the connector handle it
       takeoverWrite({
         address: env.televisionAddress as Address,
         abi: televisionABI,
         functionName: 'takeover',
         args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+        chainId,
       });
       console.log('✅ takeoverWrite called successfully');
     } catch (err) {
       console.error('❌ takeoverWrite threw error:', err);
       handleTransactionError(err as Error);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite, handleTransactionError]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, chainId, takeoverWrite, handleTransactionError]);
 
   // Handle approve success -> trigger takeover
   useEffect(() => {
@@ -373,6 +375,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('🪙 Minting USDC...', {
       to: address,
       amount: MINT_AMOUNT,
+      chainId,
     });
 
     mintUsdc({
@@ -380,8 +383,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
+      chainId,
     });
-  }, [address, mintUsdc]);
+  }, [address, chainId, mintUsdc]);
 
   // Format price helper
   const formatPrice = (price: bigint | undefined): string => {
