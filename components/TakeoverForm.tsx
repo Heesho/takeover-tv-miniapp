@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useChainId } from 'wagmi';
 import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
@@ -59,9 +59,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('📊 State:', { transactionStep, statusMessage, youtubeUrl, isValidUrl });
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
-  // Account
+  // Account and chain
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const { epochId } = useCurrentChannel();
+
+  // Log chain and account info
+  useEffect(() => {
+    console.log('🔗 Account & Chain:', { address, isConnected, chainId });
+  }, [address, isConnected, chainId]);
 
   // USDC Balance
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
@@ -183,6 +189,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       token: quoteToken,
       spender: env.televisionAddress,
       amount: currentPrice.toString(),
+      chainId,
     });
 
     setTransactionStep('approving');
@@ -192,8 +199,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
+      chainId,
     });
-  }, [quoteToken, currentPrice, approveWrite]);
+  }, [quoteToken, currentPrice, approveWrite, chainId]);
 
   // Execute takeover
   const executeTakeover = useCallback(() => {
@@ -217,6 +225,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       epochId,
       deadline: deadline.toString(),
       maxPayment: maxPaymentAmount.toString(),
+      chainId,
     });
 
     if (transactionStep === 'idle') {
@@ -229,13 +238,14 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
         abi: televisionABI,
         functionName: 'takeover',
         args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+        chainId,
       });
       console.log('✅ takeoverWrite called successfully');
     } catch (err) {
       console.error('❌ takeoverWrite threw error:', err);
       handleTransactionError(err as Error);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, transactionStep, takeoverWrite, handleTransactionError, chainId]);
 
   // Handle approve success -> trigger takeover
   useEffect(() => {
