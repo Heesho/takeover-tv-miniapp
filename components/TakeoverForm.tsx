@@ -162,10 +162,12 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setTimeout(() => {
         setStatusMessage(null);
         setTransactionStep('idle');
+        resetApprove();
+        resetTakeover();
         onSuccess?.();
       }, 4000);
     }
-  }, [isTakeoverSuccess, transactionStep, onSuccess, refetchBalance]);
+  }, [isTakeoverSuccess, transactionStep, onSuccess, refetchBalance, resetApprove, resetTakeover]);
 
   // Handle errors
   useEffect(() => {
@@ -193,11 +195,14 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       text: isUserRejection ? 'Transaction Rejected' : 'Transaction Failed',
     });
 
+    // Reset transaction state after showing error
     setTimeout(() => {
       setStatusMessage(null);
       setTransactionStep('idle');
+      resetApprove();
+      resetTakeover();
     }, 4000);
-  }, []);
+  }, [resetApprove, resetTakeover]);
 
   // Execute approve
   const executeApprove = useCallback(() => {
@@ -274,10 +279,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
     console.log('🚀 Starting takeover flow...');
 
-    // Reset any previous transaction state
-    resetApprove();
-    resetTakeover();
-
     // Check if approval is needed
     const needsApproval = !allowance || allowance < currentPrice;
 
@@ -298,8 +299,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     currentPrice,
     quoteToken,
     allowance,
-    resetApprove,
-    resetTakeover,
     executeApprove,
     executeTakeover,
   ]);
