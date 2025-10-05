@@ -147,14 +147,14 @@ export default function Home() {
         <div className="flex-1 bg-black overflow-y-auto min-h-0">
           {/* Channel Information */}
           <ChannelInfo owner={owner} price={price} quoteTokenDecimals={6} />
-
-          {/* Takeover Form */}
-          <TakeoverForm
-            currentPrice={price}
-            quoteToken={quoteToken}
-            onSuccess={refetchChannel}
-          />
         </div>
+
+        {/* Takeover Form */}
+        <TakeoverForm
+          currentPrice={price}
+          quoteToken={quoteToken}
+          onSuccess={refetchChannel}
+        />
 
         {/* Footer */}
         <footer className="relative bg-black px-3 py-2 border-t border-gray-800 flex-shrink-0">
