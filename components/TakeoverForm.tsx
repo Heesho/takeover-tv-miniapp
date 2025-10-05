@@ -227,19 +227,19 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       <div className="max-w-6xl mx-auto">
         {step === 'input' && (
           <div className="space-y-2">
-            {/* Section Header */}
-            <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
-              <h3 className="text-white text-xs font-bold uppercase tracking-wide">
-                Broadcast Your Video
-              </h3>
-            </div>
+            {/* Section Header with inline validation */}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+                <h3 className="text-white text-xs font-bold uppercase tracking-wide">
+                  Broadcast Your Video
+                </h3>
+              </div>
 
-            <div>
-              {/* Validation indicator above input */}
-              <div className="flex items-center gap-1.5 mb-1 text-xs h-4">
+              {/* Validation indicator inline with header */}
+              <div className="flex items-center gap-1.5">
                 {isValidUrl !== null && (
                   <>
                     {isValidUrl ? (
@@ -260,15 +260,16 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                   </>
                 )}
               </div>
-              <input
-                id="youtube-url"
-                type="text"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-3 py-2 bg-gray-800/50 text-white text-xs rounded border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-600"
-              />
             </div>
+
+            <input
+              id="youtube-url"
+              type="text"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full px-3 py-2 bg-gray-800/50 text-white text-xs rounded border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-600"
+            />
 
             <button
               onClick={handleSubmit}

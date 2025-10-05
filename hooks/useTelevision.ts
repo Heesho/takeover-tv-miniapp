@@ -55,7 +55,7 @@ export function useCurrentPrice() {
 
     const initPrice = slot0Data.initPrice as bigint;
     const startTime = Number(slot0Data.startTime);
-    const EPOCH_PERIOD = 24 * 60 * 60; // 24 hours in seconds
+    const EPOCH_PERIOD = 60 * 60; // 1 hour in seconds
 
     const updatePrice = () => {
       const now = Math.floor(Date.now() / 1000);
