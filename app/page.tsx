@@ -164,7 +164,7 @@ export default function Home() {
               Community Controlled Television
             </p>
             <p className="text-gray-600 text-[9px] mt-0.5">
-              Price doubles on takeover then drops to $0 over 24 hours
+              Price doubles on takeover then drops to $0 over 1 hour
             </p>
           </div>
         </footer>
