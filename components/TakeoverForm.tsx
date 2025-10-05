@@ -225,7 +225,44 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   return (
     <div className="w-full px-3 py-3">
       <div className="max-w-6xl mx-auto">
-        {step === 'input' && (
+        {/* Status Message - Replaces form when showing */}
+        {statusMessage ? (
+          <div className={`px-4 py-6 flex items-center justify-center gap-2 ${
+            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
+            {statusMessage.type === 'success' ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="text-sm font-medium">{statusMessage.text}</span>
+          </div>
+        ) : (step === 'approve' || step === 'takeover') ? (
+          <div className="text-center py-6">
+            <div className="relative inline-flex mb-3">
+              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+                </svg>
+              </div>
+            </div>
+            <p className="text-white text-sm font-bold mb-1">
+              {step === 'approve' && (isApprovePending || isApproveLoading)
+                ? 'Approving USDC...'
+                : isBatchLoading
+                ? 'Processing Batch...'
+                : 'Processing Takeover...'}
+            </p>
+            <p className="text-gray-500 text-[10px]">
+              Confirm in your wallet
+            </p>
+          </div>
+        ) : (
           <div className="space-y-2">
             {/* Section Header with inline validation */}
             <div className="flex items-center justify-between mb-2">
@@ -296,47 +333,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                 Mint $1000
               </button>
             </div>
-          </div>
-        )}
-
-        {/* Status Message - Below input form */}
-        {statusMessage && (
-          <div className={`px-4 py-3 flex items-center justify-center gap-2 ${
-            statusMessage.type === 'success' ? 'text-gray-400' : 'text-gray-500'
-          }`}>
-            {statusMessage.type === 'success' ? (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span className="text-sm font-medium">{statusMessage.text}</span>
-          </div>
-        )}
-
-        {(step === 'approve' || step === 'takeover') && (
-          <div className="text-center py-6">
-            <div className="relative inline-flex mb-3">
-              <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-700 border-t-white" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                </svg>
-              </div>
-            </div>
-            <p className="text-white text-sm font-bold mb-1">
-              {step === 'approve' && (isApprovePending || isApproveLoading)
-                ? 'Approving USDC...'
-                : isBatchLoading
-                ? 'Processing Batch...'
-                : 'Processing Takeover...'}
-            </p>
-            <p className="text-gray-500 text-[10px]">
-              Confirm in your wallet
-            </p>
           </div>
         )}
       </div>
