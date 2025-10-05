@@ -42,6 +42,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const [step, setStep] = useState<'input' | 'approve' | 'takeover' | 'success'>('input');
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [shouldTakeover, setShouldTakeover] = useState(false);
 
   const { address, isConnected } = useAccount();
 
@@ -125,10 +126,24 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   useEffect(() => {
     if (isApproveSuccess && step === 'approve') {
-      setStep('takeover');
-      handleTakeover();
+      console.log('Approve successful, waiting before triggering takeover...');
+
+      // Wait a bit for approval to fully settle
+      setTimeout(() => {
+        console.log('Now triggering takeover...');
+        setShouldTakeover(true);
+        setStep('takeover');
+      }, 500);
     }
   }, [isApproveSuccess, step]);
+
+  useEffect(() => {
+    if (shouldTakeover && step === 'takeover') {
+      console.log('Executing takeover...');
+      setShouldTakeover(false);
+      handleTakeover();
+    }
+  }, [shouldTakeover, step]);
 
   useEffect(() => {
     if (isTakeoverSuccess || isBatchSuccess) {
