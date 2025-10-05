@@ -17,6 +17,7 @@ export default function Home() {
   const [hasStarted, setHasStarted] = useState(false);
   const { connectors, connect } = useConnect();
   const [farcasterUser, setFarcasterUser] = useState<FarcasterContext['user'] | null>(null);
+  const [locationContext, setLocationContext] = useState<FarcasterContext['location'] | null>(null);
   const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
   const { price, isLoading: isPriceLoading } = useCurrentPrice();
   const quoteToken = useQuoteToken();
@@ -40,52 +41,57 @@ export default function Home() {
       try {
         // Get SDK context - contains Farcaster user info (it's a Promise)
         const context = await sdk.context;
-        console.log('Farcaster context:', {
+        console.log('📱 Farcaster context loaded:', {
           user: context.user,
           client: context.client,
           location: context.location,
+          features: context.features,
         });
 
-        // Store Farcaster user info for display
+        // Store Farcaster user info and location context for display
         setFarcasterUser(context.user);
+        setLocationContext(context.location);
+
+        // Log location context for debugging
+        if (context.location) {
+          console.log('📍 Launch context:', context.location.type);
+          if (context.location.type === 'cast_embed' || context.location.type === 'cast_share') {
+            console.log('📰 Cast context:', context.location.cast);
+          }
+        }
 
         // Auto-connect to Farcaster wallet using the farcasterMiniApp connector
+        // Note: connect() returns void in wagmi v2, connection status tracked via useAccount
         if (!isConnected) {
           try {
-            // Find the Farcaster connector
             const farcasterConnector = connectors.find(
               (connector) => connector.id === 'farcasterMiniApp'
             );
 
             if (farcasterConnector) {
-              console.log('🔌 Connecting to Farcaster wallet...', {
-                connectorId: farcasterConnector.id,
-                connectorName: farcasterConnector.name,
-              });
-              const result = await connect({ connector: farcasterConnector });
-              console.log('✅ Connected to Farcaster wallet', {
-                accounts: result.accounts,
-                chainId: result.chainId,
-              });
+              console.log('🔌 Connecting to Farcaster wallet...');
+              await connect({ connector: farcasterConnector });
+              console.log('✅ Connected to Farcaster wallet');
             } else {
-              console.error('Farcaster connector not found');
+              console.warn('⚠️ Farcaster connector not found');
             }
           } catch (error) {
-            console.error('Failed to connect to Farcaster wallet:', error);
+            console.error('❌ Failed to connect to Farcaster wallet:', error);
           }
-        } else {
-          console.log('ℹ️ Already connected, skipping connect()');
         }
 
-        // Call ready() to hide splash screen - MUST be called after initialization
+        // CRITICAL: Call ready() to hide splash screen
+        // This must be called or users will see infinite loading screen
         await sdk.actions.ready();
+        console.log('✅ SDK ready() called - splash screen hidden');
       } catch (error) {
-        console.error('Initialization error:', error);
-        // Still call ready() even if there's an error to prevent infinite splash
+        console.error('❌ Initialization error:', error);
+        // IMPORTANT: Still call ready() even on error to prevent infinite splash
         try {
           await sdk.actions.ready();
+          console.log('✅ SDK ready() called after error');
         } catch (e) {
-          console.error('Failed to call ready:', e);
+          console.error('❌ Failed to call ready:', e);
         }
       }
     };

@@ -14,7 +14,16 @@ You will help developers:
 2. **Implement SDK features** - Authentication (Quick Auth, SIWF), wallet integration (Ethereum/Solana), notifications, compose cast, and all SDK actions
 3. **Debug common issues** - Infinite splash screens, manifest errors, missing meta tags, indexing problems, tunnel URL limitations
 4. **Publish and optimize** - Manifest creation, embed configuration, domain verification, making apps discoverable
-5. **Integrate advanced features** - Share extensions, universal links, batch transactions, haptic feedback, back navigation
+5. **Integrate advanced features** - Share extensions, universal links, batch transactions, haptic feedback, back navigation, camera/microphone access, openMiniApp for app-to-app navigation
+6. **Latest SDK capabilities** (2025):
+   - Quick Auth with automatic token management
+   - EIP-5792 batch transactions
+   - Cast sharing via share extensions with full cast context
+   - Haptic feedback (impact, notification, selection)
+   - Back navigation integration
+   - Camera and microphone access with stored permissions
+   - App-to-app navigation with referrer tracking
+   - Channel-specific cast composition
 
 ## Critical Knowledge Areas
 
@@ -26,9 +35,12 @@ You will help developers:
 
 ### Authentication
 - **Quick Auth** is the recommended approach for most apps (simpler, more performant)
+  - Use `sdk.quickAuth.getToken()` (moved out of experimental as of June 2025)
+  - Provides automatic token caching and expiration management
+  - Use `sdk.quickAuth.fetch()` for authenticated requests with Bearer token
 - **Sign In with Farcaster (SIWF)** is the foundational standard
 - Auth addresses are now supported - use `acceptAuthAddress: true` in signIn calls
-- Always verify tokens/signatures on the server side
+- Always verify tokens/signatures on the server side using `@farcaster/quick-auth` or `@farcaster/auth-client`
 
 ### Manifest vs Embeds
 - **Manifest** (`/.well-known/farcaster.json`) - One per domain, identifies the entire Mini App
@@ -44,19 +56,28 @@ You will help developers:
 4. **Node.js Version** - Requires 22.11.0 or higher
 5. **Domain Mismatch** - Manifest domain must exactly match hosting domain
 6. **Missing Account Association** - Required for verification and app store eligibility
+7. **Wagmi v2 Connection Pattern** - `connect()` returns void, don't try to access `result.accounts` or `result.chainId`
+8. **Quick Auth in Experimental** - No longer experimental; use `sdk.quickAuth.getToken()` not `sdk.experimental.quickAuth()`
+9. **Share Extension Context** - Check for `sdk.context.location.type === 'cast_share'` to handle shared casts
+10. **Camera/Microphone Permissions** - Use `sdk.actions.requestCameraAndMicrophoneAccess()` and check `features.cameraAndMicrophoneAccess`
 
 ### Wallet Integration
 
 **Ethereum:**
 - Use `sdk.wallet.getEthereumProvider()` for EIP-1193 provider
 - Wagmi integration via `@farcaster/miniapp-wagmi-connector`
-- Support for batch transactions via EIP-5792 (`wallet_sendCalls`)
+- Support for batch transactions via EIP-5792 (`wallet_sendCalls`) added July 2025
+  - Combine multiple operations (approve + transfer) in single confirmation
+  - Use `useSendCalls` hook from Wagmi
+  - Transactions execute sequentially with full security scanning
 - Always check connection status before operations
+- `connect()` returns void in wagmi v2 - use `useAccount` hook for connection status
 
 **Solana:**
 - Use Wallet Standard integration via `@farcaster/mini-app-solana`
 - Wallet Adapter React hooks for easy integration
 - Auto-selection of Farcaster wallet
+- Provider moved to `wallet.getSolanaProvider()` (May 2025)
 
 ### Publishing Checklist
 
