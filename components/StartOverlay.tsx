@@ -13,6 +13,10 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
   const handleStart = () => {
     setIsPoweringOn(true);
 
+    // Play a silent audio to unlock autoplay (browser requirement)
+    const audio = new Audio();
+    audio.play().catch(() => {});
+
     // Start TV power-on sequence
     setTimeout(() => {
       setIsExiting(true);
