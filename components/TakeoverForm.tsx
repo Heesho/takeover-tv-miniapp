@@ -113,6 +113,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     writeContract: takeoverWrite,
     data: takeoverHash,
     error: takeoverError,
+    isPending: isTakeoverPending,
     reset: resetTakeover,
   } = useWriteContract();
 
@@ -122,6 +123,17 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   } = useWaitForTransactionReceipt({
     hash: takeoverHash,
   });
+
+  // Debug takeover transaction state
+  useEffect(() => {
+    console.log('🔍 Takeover transaction state:', {
+      hash: takeoverHash,
+      isPending: isTakeoverPending,
+      isLoading: isTakeoverLoading,
+      isSuccess: isTakeoverSuccess,
+      error: takeoverError?.message,
+    });
+  }, [takeoverHash, isTakeoverPending, isTakeoverLoading, isTakeoverSuccess, takeoverError]);
 
   // Validate YouTube URL
   useEffect(() => {
@@ -263,6 +275,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   useEffect(() => {
     if (approveError && transactionStep === 'approving') {
       console.error('❌ Approve error:', approveError);
+      console.error('Full error object:', JSON.stringify(approveError, null, 2));
       handleTransactionError(approveError);
     }
   }, [approveError, transactionStep, handleTransactionError]);
@@ -270,6 +283,13 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   useEffect(() => {
     if (takeoverError && transactionStep === 'taking-over') {
       console.error('❌ Takeover error:', takeoverError);
+      console.error('Full error object:', JSON.stringify(takeoverError, null, 2));
+      console.error('Error cause:', takeoverError?.cause);
+      console.error('Error details:', {
+        message: takeoverError?.message,
+        name: takeoverError?.name,
+        cause: takeoverError?.cause,
+      });
       handleTransactionError(takeoverError);
     }
   }, [takeoverError, transactionStep, handleTransactionError]);

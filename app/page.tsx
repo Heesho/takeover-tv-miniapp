@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAccount, useReconnect } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { ChannelInfo } from '@/components/ChannelInfo';
@@ -15,7 +15,7 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const { reconnect } = useReconnect();
+  const { connectors, connect } = useConnect();
   const [farcasterUser, setFarcasterUser] = useState<FarcasterContext['user'] | null>(null);
   const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
   const { price, isLoading: isPriceLoading } = useCurrentPrice();
@@ -49,14 +49,22 @@ export default function Home() {
         // Store Farcaster user info for display
         setFarcasterUser(context.user);
 
-        // Auto-reconnect to Farcaster wallet using wagmi's reconnect
-        // This works with the farcasterMiniApp connector automatically
+        // Auto-connect to Farcaster wallet using the farcasterMiniApp connector
         if (!isConnected) {
           try {
-            await reconnect();
-            console.log('Reconnected to Farcaster wallet');
+            // Find the Farcaster connector
+            const farcasterConnector = connectors.find(
+              (connector) => connector.id === 'farcasterMiniApp'
+            );
+
+            if (farcasterConnector) {
+              await connect({ connector: farcasterConnector });
+              console.log('Connected to Farcaster wallet');
+            } else {
+              console.error('Farcaster connector not found');
+            }
           } catch (error) {
-            console.error('Failed to reconnect to Farcaster wallet:', error);
+            console.error('Failed to connect to Farcaster wallet:', error);
           }
         }
 
@@ -74,7 +82,7 @@ export default function Home() {
     };
 
     init();
-  }, [mounted, isConnected, reconnect]);
+  }, [mounted, isConnected, connectors, connect]);
 
   // Show start overlay until user clicks
   if (!hasStarted) {
