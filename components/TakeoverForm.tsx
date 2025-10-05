@@ -103,6 +103,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     writeContract: approveWrite,
     data: approveHash,
     error: approveError,
+    isPending: isApprovePending,
     reset: resetApprove,
   } = useWriteContract();
 
@@ -152,6 +153,20 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       error: takeoverError?.message,
     });
   }, [takeoverHash, isTakeoverPending, isTakeoverLoading, isTakeoverSuccess, takeoverError]);
+
+  // Set step to taking-over when transaction is pending (after wallet modal opens)
+  useEffect(() => {
+    if (isTakeoverPending && transactionStep !== 'taking-over') {
+      setTransactionStep('taking-over');
+    }
+  }, [isTakeoverPending, transactionStep]);
+
+  // Set step to approving when approve transaction is pending (after wallet modal opens)
+  useEffect(() => {
+    if (isApprovePending && transactionStep !== 'approving') {
+      setTransactionStep('approving');
+    }
+  }, [isApprovePending, transactionStep]);
 
   // Validate YouTube URL
   useEffect(() => {
@@ -218,7 +233,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       amount: currentPrice.toString(),
     });
 
-    setTransactionStep('approving');
+    // DON'T set step before calling approveWrite - this prevents blocking the Farcaster wallet modal
+    // The step will be set by the isPending state change
 
     approveWrite({
       address: quoteToken as Address,
@@ -253,7 +269,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       maxPayment: maxPaymentAmount.toString(),
     });
 
-    setTransactionStep('taking-over');
+    // DON'T set step before calling takeoverWrite - this prevents blocking the Farcaster wallet modal
+    // The step will be set by the isPending state change
 
     try {
       takeoverWrite({
