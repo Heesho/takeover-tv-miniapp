@@ -125,7 +125,7 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-2 gap-3">
           {/* Current Owner */}
-          <div className="px-3 py-2">
+          <div className="bg-gray-900/50 rounded px-3 py-2 border border-gray-800">
             <div className="flex items-center gap-1.5 mb-1.5">
               <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
@@ -158,7 +158,7 @@ export function ChannelInfo({ owner, price, quoteTokenDecimals = 6 }: ChannelInf
           </div>
 
           {/* Current Price */}
-          <div className="px-3 py-2">
+          <div className="bg-gray-900/50 rounded px-3 py-2 border border-gray-800">
             <div className="flex items-center gap-1.5 mb-1.5">
               <svg className="w-3 h-3 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
