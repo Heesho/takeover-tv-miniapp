@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useWaitForTransactionReceipt, useReadContract, useWalletClient } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract, useConnectorClient } from 'wagmi';
 import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
@@ -70,8 +70,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
   // Account and chain
-  const { address, isConnected, chainId } = useAccount();
-  const { data: walletClient } = useWalletClient({ chainId: env.chainId });
+  const { address, isConnected, chainId, connector } = useAccount();
+  const { data: connectorClient } = useConnectorClient();
   const { epochId } = useCurrentChannel();
 
   // Log chain info for debugging
@@ -245,8 +245,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // Execute approve
   const executeApprove = useCallback(async () => {
-    if (!quoteToken || !currentPrice || !walletClient) {
-      console.error('❌ Missing quoteToken, currentPrice, or walletClient');
+    if (!quoteToken || !currentPrice || !connectorClient) {
+      console.error('❌ Missing quoteToken, currentPrice, or connectorClient');
       return;
     }
 
@@ -260,7 +260,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setIsApprovePending(true);
       setApproveError(null);
 
-      const hash = await walletClient.writeContract({
+      const hash = await connectorClient.writeContract({
         address: quoteToken,
         abi: erc20ABI,
         functionName: 'approve',
@@ -274,18 +274,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setApproveError(error as Error);
       setIsApprovePending(false);
     }
-  }, [quoteToken, currentPrice, walletClient]);
+  }, [quoteToken, currentPrice, connectorClient]);
 
   // Execute takeover
   const executeTakeover = useCallback(async () => {
-    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined || !walletClient) {
+    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined || !connectorClient) {
       console.error('❌ Missing required parameters for takeover', {
         isValidUrl,
         youtubeUrl,
         address,
         currentPrice: currentPrice?.toString(),
         epochId,
-        walletClient: !!walletClient,
+        connectorClient: !!connectorClient,
       });
       return;
     }
@@ -308,7 +308,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setIsTakeoverPending(true);
       setTakeoverError(null);
 
-      const hash = await walletClient.writeContract({
+      const hash = await connectorClient.writeContract({
         address: env.televisionAddress,
         abi: televisionABI,
         functionName: 'takeover',
@@ -322,7 +322,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       setTakeoverError(error as Error);
       setIsTakeoverPending(false);
     }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, walletClient]);
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, connectorClient]);
 
   // Track transaction steps based on pending/loading states
   useEffect(() => {
@@ -433,8 +433,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // Handle mint USDC
   const handleMintUsdc = useCallback(async () => {
-    if (!address || !walletClient) {
-      console.warn('⚠️ No address or walletClient for minting');
+    if (!address || !connectorClient) {
+      console.warn('⚠️ No address or connectorClient for minting');
       return;
     }
 
@@ -444,7 +444,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     });
 
     try {
-      const hash = await walletClient.writeContract({
+      const hash = await connectorClient.writeContract({
         address: env.usdcAddress,
         abi: MOCK_USDC_ABI,
         functionName: 'mint',
@@ -456,7 +456,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     } catch (error) {
       console.error('❌ Mint failed:', error);
     }
-  }, [address, walletClient]);
+  }, [address, connectorClient]);
 
   // Format price helper
   const formatPrice = (price: bigint | undefined): string => {
