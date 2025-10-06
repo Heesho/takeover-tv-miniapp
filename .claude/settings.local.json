@@ -16,7 +16,9 @@
       "WebFetch(domain:takeover-tv-miniapp.vercel.app)",
       "WebSearch",
       "WebFetch(domain:miniapps.farcaster.xyz)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(curl -s \"https://sepolia.base.org\" -X POST -H \"Content-Type: application/json\" --data '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"method\"\"\"\":\"\"\"\"eth_call\"\"\"\",\"\"\"\"params\"\"\"\":[{\"\"\"\"to\"\"\"\":\"\"\"\"0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215\"\"\"\",\"\"\"\"data\"\"\"\":\"\"\"\"0x0dfe1681\"\"\"\"},\"\"\"\"latest\"\"\"\"],\"\"\"\"id\"\"\"\":1}')",
+      "Bash(curl -s \"https://sepolia.base.org\" -X POST -H \"Content-Type: application/json\" --data '{\"\"\"\"jsonrpc\"\"\"\":\"\"\"\"2.0\"\"\"\",\"\"\"\"method\"\"\"\":\"\"\"\"eth_call\"\"\"\",\"\"\"\"params\"\"\"\":[{\"\"\"\"to\"\"\"\":\"\"\"\"0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215\"\"\"\",\"\"\"\"data\"\"\"\":\"\"\"\"0x999b93af\"\"\"\"},\"\"\"\"latest\"\"\"\"],\"\"\"\"id\"\"\"\":1}')"
     ],
     "deny": [],
     "ask": []

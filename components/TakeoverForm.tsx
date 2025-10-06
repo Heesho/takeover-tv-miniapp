@@ -60,8 +60,26 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
   // Account and chain
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId } = useAccount();
   const { epochId } = useCurrentChannel();
+
+  // Log chain info for debugging
+  useEffect(() => {
+    if (chainId) {
+      console.log('🔗 Connected chain:', {
+        chainId,
+        expected: env.chainId,
+        match: chainId === env.chainId,
+      });
+
+      if (chainId !== env.chainId) {
+        console.warn('⚠️ WARNING: Connected to wrong chain!', {
+          connected: chainId,
+          expected: env.chainId,
+        });
+      }
+    }
+  }, [chainId]);
 
   // Log chain and account info
   useEffect(() => {
@@ -74,6 +92,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     abi: MOCK_USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    chainId: env.chainId,
     query: {
       refetchInterval: 3000,
     },
@@ -85,6 +104,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     abi: erc20ABI,
     functionName: 'allowance',
     args: address && quoteToken ? [address, env.televisionAddress] : undefined,
+    chainId: env.chainId,
   });
 
   // Mint USDC transaction
@@ -231,6 +251,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress as Address, currentPrice],
+      chainId: env.chainId,
     });
   }, [quoteToken, currentPrice, approveWrite]);
 
@@ -274,6 +295,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      chainId: env.chainId,
     });
 
     console.log('✅ takeoverWrite called');
@@ -404,6 +426,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
+      chainId: env.chainId,
     });
   }, [address, mintUsdc]);
 

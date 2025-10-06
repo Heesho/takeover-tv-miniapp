@@ -9,6 +9,7 @@ export function useCurrentChannel() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getSlot0',
+    chainId: env.chainId,
   });
 
   // Watch for Takeover events to refetch
@@ -38,12 +39,14 @@ export function useCurrentPrice() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getSlot0',
+    chainId: env.chainId,
   });
 
   const { data: contractPrice, isLoading } = useReadContract({
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getPrice',
+    chainId: env.chainId,
   });
 
   // Client-side price decay calculation
@@ -89,6 +92,7 @@ export function useQuoteToken() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'quote',
+    chainId: env.chainId,
   });
 
   return quoteToken as Address | undefined;
