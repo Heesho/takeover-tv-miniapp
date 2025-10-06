@@ -15,7 +15,6 @@ export const config = isMainnet
       },
       connectors: [farcasterMiniApp()],
       multiInjectedProviderDiscovery: false,
-      ssr: true, // Enable server-side rendering support
     })
   : createConfig({
       chains: [baseSepolia],
@@ -24,5 +23,4 @@ export const config = isMainnet
       },
       connectors: [farcasterMiniApp()],
       multiInjectedProviderDiscovery: false,
-      ssr: true, // Enable server-side rendering support
     });

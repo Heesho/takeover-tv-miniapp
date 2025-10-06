@@ -3,7 +3,7 @@
 ## 🎯 Pre-Testing Setup
 
 - [x] Contracts deployed to Base Sepolia
-  - Television: `0x7136763c7951F923b1861774CF9ef12095cb21DD`
+  - Television: `0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215`
   - USDC: `0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7`
 - [x] `.env.local` configured with correct addresses
 - [ ] SVG images converted to PNG
@@ -99,7 +99,7 @@ Decimals: 6
 
 1. **Clear approval:**
    - Go to https://sepolia.basescan.org/address/0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7#writeContract
-   - Call `approve(0x7136763c7951F923b1861774CF9ef12095cb21DD, 0)` to reset
+   - Call `approve(0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215, 0)` to reset
 
 2. **Try takeover:**
    - [ ] Submit new YouTube URL

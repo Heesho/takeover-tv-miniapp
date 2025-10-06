@@ -4,7 +4,7 @@
 
 Your TakeoverTV Mini App is configured for **Base Sepolia testnet**:
 
-- **Television Contract**: `0x7136763c7951F923b1861774CF9ef12095cb21DD`
+- **Television Contract**: `0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215`
 - **USDC Token**: `0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7`
 - **Network**: Base Sepolia (Chain ID: 84532)
 
@@ -83,7 +83,7 @@ ngrok http 3000
 
 **Base Sepolia:**
 - Block Explorer: https://sepolia.basescan.org
-- Your Contract: https://sepolia.basescan.org/address/0x7136763c7951F923b1861774CF9ef12095cb21DD
+- Your Contract: https://sepolia.basescan.org/address/0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215
 - USDC Token: https://sepolia.basescan.org/address/0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7
 
 **Farcaster:**
@@ -103,7 +103,7 @@ npm run build
 npm run check
 
 # View contract on BaseScan
-start https://sepolia.basescan.org/address/0x7136763c7951F923b1861774CF9ef12095cb21DD
+start https://sepolia.basescan.org/address/0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215
 ```
 
 ## 🎯 What You'll See

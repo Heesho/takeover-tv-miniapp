@@ -24,7 +24,7 @@ export function useCurrentChannel() {
   return {
     owner: data?.owner as Address | undefined,
     uri: data?.uri as string | undefined,
-    epochId: data?.epochId as number | undefined,
+    epochId: data?.epochId !== undefined ? Number(data.epochId) : undefined,
     isLoading,
     refetch,
   };

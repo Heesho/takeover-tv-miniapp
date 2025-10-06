@@ -151,8 +151,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       isLoading: isTakeoverLoading,
       isSuccess: isTakeoverSuccess,
       error: takeoverError?.message,
+      transactionStep,
     });
-  }, [takeoverHash, isTakeoverPending, isTakeoverLoading, isTakeoverSuccess, takeoverError]);
+  }, [takeoverHash, isTakeoverPending, isTakeoverLoading, isTakeoverSuccess, takeoverError, transactionStep]);
 
   // Don't set transaction step based on isPending - it causes re-renders that block the wallet modal
   // Instead, use isPending directly in the UI rendering logic
@@ -256,24 +257,27 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       epochId,
       deadline: deadline.toString(),
       maxPayment: maxPaymentAmount.toString(),
+      currentPrice: currentPrice.toString(),
     });
 
     // DON'T set step before calling takeoverWrite - this prevents blocking the Farcaster wallet modal
     // The step will be set by the isPending state change
 
-    try {
-      takeoverWrite({
-        address: env.televisionAddress as Address,
-        abi: televisionABI,
-        functionName: 'takeover',
-        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-      });
-      console.log('✅ takeoverWrite called successfully');
-    } catch (err) {
-      console.error('❌ takeoverWrite threw error:', err);
-      handleTransactionError(err as Error);
-    }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite, handleTransactionError]);
+    console.log('📝 Calling takeoverWrite with params:', {
+      address: env.televisionAddress,
+      functionName: 'takeover',
+      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+    });
+
+    takeoverWrite({
+      address: env.televisionAddress as Address,
+      abi: televisionABI,
+      functionName: 'takeover',
+      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+    });
+
+    console.log('✅ takeoverWrite called');
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite]);
 
   // Track transaction steps based on pending/loading states
   useEffect(() => {
@@ -331,9 +335,17 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [approveError, transactionStep, handleTransactionError]);
 
   useEffect(() => {
-    if (takeoverError && transactionStep === 'taking-over') {
-      console.error('❌ Takeover error:', takeoverError);
-      handleTransactionError(takeoverError);
+    if (takeoverError) {
+      console.error('❌ Takeover error detected:', {
+        error: takeoverError,
+        message: takeoverError.message,
+        transactionStep,
+        willHandle: transactionStep === 'taking-over',
+      });
+
+      if (transactionStep === 'taking-over') {
+        handleTransactionError(takeoverError);
+      }
     }
   }, [takeoverError, transactionStep, handleTransactionError]);
 
