@@ -313,7 +313,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('📝 Full wagmi writeContract params:', JSON.stringify({
       address: txParams.address,
       functionName: txParams.functionName,
-      chainId: txParams.chainId,
       args: txParams.args.map(arg => typeof arg === 'bigint' ? arg.toString() : arg),
       abi: '[ABI_HIDDEN]',
     }, null, 2));
