@@ -308,13 +308,16 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     const txParams = {
       address: env.televisionAddress,
       abi: televisionABI,
-      functionName: 'takeover',
-      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      functionName: 'takeover' as const,
+      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount] as const,
       chainId: env.chainId,
     };
 
     console.log('📝 Full wagmi writeContract params:', JSON.stringify({
-      ...txParams,
+      address: txParams.address,
+      functionName: txParams.functionName,
+      chainId: txParams.chainId,
+      args: txParams.args.map(arg => typeof arg === 'bigint' ? arg.toString() : arg),
       abi: '[ABI_HIDDEN]',
     }, null, 2));
 
