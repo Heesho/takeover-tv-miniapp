@@ -222,3 +222,4 @@ Make sure your manifest is properly signed and accessible at `https://yourdomain
 
 MIT
 # takeover-tv-miniapp
+# Force rebuild
