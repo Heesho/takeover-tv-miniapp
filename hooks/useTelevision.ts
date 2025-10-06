@@ -9,7 +9,6 @@ export function useCurrentChannel() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getSlot0',
-    chainId: env.chainId,
   });
 
   // Watch for Takeover events to refetch
@@ -17,7 +16,6 @@ export function useCurrentChannel() {
     address: env.televisionAddress,
     abi: televisionABI,
     eventName: 'Television__Takeover',
-    chainId: env.chainId,
     onLogs: () => {
       refetch();
     },
@@ -40,14 +38,12 @@ export function useCurrentPrice() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getSlot0',
-    chainId: env.chainId,
   });
 
   const { data: contractPrice, isLoading } = useReadContract({
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'getPrice',
-    chainId: env.chainId,
   });
 
   // Client-side price decay calculation
@@ -93,7 +89,6 @@ export function useQuoteToken() {
     address: env.televisionAddress,
     abi: televisionABI,
     functionName: 'quote',
-    chainId: env.chainId,
   });
 
   return quoteToken as Address | undefined;
@@ -104,7 +99,6 @@ export function useTakeoverEvents(onTakeover?: (channelOwner: Address, paymentAm
     address: env.televisionAddress,
     abi: televisionABI,
     eventName: 'Television__Takeover',
-    chainId: env.chainId,
     onLogs: (logs) => {
       for (const log of logs) {
         if (log.args.channelOwner && log.args.paymentAmount !== undefined) {

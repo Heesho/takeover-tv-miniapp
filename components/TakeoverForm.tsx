@@ -102,7 +102,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     abi: MOCK_USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    chainId: env.chainId,
     query: {
       enabled: !!address, // Only query when address is available
       refetchInterval: 3000,
@@ -115,7 +114,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     abi: erc20ABI,
     functionName: 'allowance',
     args: address && quoteToken ? [address, env.televisionAddress] : undefined,
-    chainId: env.chainId,
     query: {
       enabled: !!(address && quoteToken), // Only query when both are available
     },
