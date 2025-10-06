@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useWaitForTransactionReceipt, useReadContract, useConnectorClient } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract, useWriteContract } from 'wagmi';
 import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
@@ -70,8 +70,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [transactionStep, statusMessage, youtubeUrl, isValidUrl]);
 
   // Account and chain
-  const { address, isConnected, chainId, connector } = useAccount();
-  const { data: connectorClient } = useConnectorClient();
+  const { address, isConnected, chainId } = useAccount();
   const { epochId } = useCurrentChannel();
 
   // Log chain info for debugging
@@ -120,18 +119,25 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     },
   });
 
-  // Transaction state management
-  const [mintHash, setMintHash] = useState<Address | undefined>();
-  const [approveHash, setApproveHash] = useState<Address | undefined>();
-  const [takeoverHash, setTakeoverHash] = useState<Address | undefined>();
-  const [approveError, setApproveError] = useState<Error | null>(null);
-  const [takeoverError, setTakeoverError] = useState<Error | null>(null);
-  const [isApprovePending, setIsApprovePending] = useState(false);
-  const [isTakeoverPending, setIsTakeoverPending] = useState(false);
+  // Mint USDC transaction
+  const {
+    writeContract: mintUsdc,
+    data: mintHash,
+    reset: resetMint,
+  } = useWriteContract();
 
   const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
     hash: mintHash
   });
+
+  // Approve transaction
+  const {
+    writeContract: approveWrite,
+    data: approveHash,
+    error: approveError,
+    isPending: isApprovePending,
+    reset: resetApprove,
+  } = useWriteContract();
 
   const {
     isLoading: isApproveLoading,
@@ -140,6 +146,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     hash: approveHash,
   });
 
+  // Takeover transaction
+  const {
+    writeContract: takeoverWrite,
+    data: takeoverHash,
+    error: takeoverError,
+    isPending: isTakeoverPending,
+    reset: resetTakeover,
+  } = useWriteContract();
+
   const {
     isLoading: isTakeoverLoading,
     isSuccess: isTakeoverSuccess,
@@ -147,22 +162,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   } = useWaitForTransactionReceipt({
     hash: takeoverHash,
   });
-
-  const resetApprove = useCallback(() => {
-    setApproveHash(undefined);
-    setApproveError(null);
-    setIsApprovePending(false);
-  }, []);
-
-  const resetTakeover = useCallback(() => {
-    setTakeoverHash(undefined);
-    setTakeoverError(null);
-    setIsTakeoverPending(false);
-  }, []);
-
-  const resetMint = useCallback(() => {
-    setMintHash(undefined);
-  }, []);
 
   // Debug receipt state
   useEffect(() => {
@@ -244,9 +243,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [resetApprove, resetTakeover]);
 
   // Execute approve
-  const executeApprove = useCallback(async () => {
-    if (!quoteToken || !currentPrice || !connectorClient) {
-      console.error('❌ Missing quoteToken, currentPrice, or connectorClient');
+  const executeApprove = useCallback(() => {
+    if (!quoteToken || !currentPrice) {
+      console.error('❌ Missing quoteToken or currentPrice');
       return;
     }
 
@@ -256,36 +255,23 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       amount: currentPrice.toString(),
     });
 
-    try {
-      setIsApprovePending(true);
-      setApproveError(null);
-
-      const hash = await connectorClient.writeContract({
-        address: quoteToken,
-        abi: erc20ABI,
-        functionName: 'approve',
-        args: [env.televisionAddress, currentPrice],
-      });
-
-      console.log('✅ Approve transaction sent:', hash);
-      setApproveHash(hash);
-    } catch (error) {
-      console.error('❌ Approve failed:', error);
-      setApproveError(error as Error);
-      setIsApprovePending(false);
-    }
-  }, [quoteToken, currentPrice, connectorClient]);
+    approveWrite({
+      address: quoteToken,
+      abi: erc20ABI,
+      functionName: 'approve',
+      args: [env.televisionAddress, currentPrice],
+    });
+  }, [quoteToken, currentPrice, approveWrite]);
 
   // Execute takeover
-  const executeTakeover = useCallback(async () => {
-    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined || !connectorClient) {
+  const executeTakeover = useCallback(() => {
+    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined) {
       console.error('❌ Missing required parameters for takeover', {
         isValidUrl,
         youtubeUrl,
         address,
         currentPrice: currentPrice?.toString(),
         epochId,
-        connectorClient: !!connectorClient,
       });
       return;
     }
@@ -304,25 +290,15 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('  Arg 3 - deadline (uint256):', deadline.toString());
     console.log('  Arg 4 - maxPaymentAmount (uint256):', maxPaymentAmount.toString());
 
-    try {
-      setIsTakeoverPending(true);
-      setTakeoverError(null);
+    takeoverWrite({
+      address: env.televisionAddress,
+      abi: televisionABI,
+      functionName: 'takeover',
+      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+    });
 
-      const hash = await connectorClient.writeContract({
-        address: env.televisionAddress,
-        abi: televisionABI,
-        functionName: 'takeover',
-        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-      });
-
-      console.log('✅ Takeover transaction sent:', hash);
-      setTakeoverHash(hash);
-    } catch (error) {
-      console.error('❌ Takeover failed:', error);
-      setTakeoverError(error as Error);
-      setIsTakeoverPending(false);
-    }
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, connectorClient]);
+    console.log('✅ takeoverWrite called');
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite]);
 
   // Track transaction steps based on pending/loading states
   useEffect(() => {
@@ -432,9 +408,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   ]);
 
   // Handle mint USDC
-  const handleMintUsdc = useCallback(async () => {
-    if (!address || !connectorClient) {
-      console.warn('⚠️ No address or connectorClient for minting');
+  const handleMintUsdc = useCallback(() => {
+    if (!address) {
+      console.warn('⚠️ No address for minting');
       return;
     }
 
@@ -443,20 +419,13 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       amount: MINT_AMOUNT,
     });
 
-    try {
-      const hash = await connectorClient.writeContract({
-        address: env.usdcAddress,
-        abi: MOCK_USDC_ABI,
-        functionName: 'mint',
-        args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
-      });
-
-      console.log('✅ Mint transaction sent:', hash);
-      setMintHash(hash);
-    } catch (error) {
-      console.error('❌ Mint failed:', error);
-    }
-  }, [address, connectorClient]);
+    mintUsdc({
+      address: env.usdcAddress,
+      abi: MOCK_USDC_ABI,
+      functionName: 'mint',
+      args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
+    });
+  }, [address, mintUsdc]);
 
   // Format price helper
   const formatPrice = (price: bigint | undefined): string => {
