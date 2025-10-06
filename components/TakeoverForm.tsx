@@ -54,6 +54,16 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   const [transactionStep, setTransactionStep] = useState<TransactionStep>('idle');
   const [statusMessage, setStatusMessage] = useState<StatusMessage | null>(null);
 
+  // Log environment on mount
+  useEffect(() => {
+    console.log('🌍 ENVIRONMENT CONFIGURATION:');
+    console.log('  Television Address:', env.televisionAddress);
+    console.log('  USDC Address:', env.usdcAddress);
+    console.log('  Chain ID:', env.chainId);
+    console.log('  RPC URL:', env.rpcUrl);
+    console.log('  App Domain:', env.appDomain);
+  }, []);
+
   // Debug: Log state changes
   useEffect(() => {
     console.log('📊 State:', { transactionStep, statusMessage, youtubeUrl, isValidUrl });
@@ -272,35 +282,43 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       return;
     }
 
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECONDS);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const deadline = BigInt(currentTimestamp + DEADLINE_SECONDS);
     // For $0 price, no slippage needed
     const maxPaymentAmount = currentPrice === 0n ? 0n : currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
 
-    console.log('🔄 Executing takeover...', {
-      url: youtubeUrl,
-      recipient: address,
-      epochId,
-      deadline: deadline.toString(),
-      maxPayment: maxPaymentAmount.toString(),
-      currentPrice: currentPrice.toString(),
-    });
+    console.log('🔄 Executing takeover...');
+    console.log('📋 DETAILED TRANSACTION PARAMETERS:');
+    console.log('  Contract Address:', env.televisionAddress);
+    console.log('  Chain ID:', env.chainId);
+    console.log('  Function:', 'takeover');
+    console.log('  Arg 0 - uri (string):', youtubeUrl);
+    console.log('  Arg 1 - channelOwner (address):', address);
+    console.log('  Arg 2 - epochId (uint256):', BigInt(epochId).toString());
+    console.log('  Arg 3 - deadline (uint256):', deadline.toString());
+    console.log('    → Current timestamp:', currentTimestamp);
+    console.log('    → Deadline in seconds:', DEADLINE_SECONDS);
+    console.log('    → Deadline timestamp:', currentTimestamp + DEADLINE_SECONDS);
+    console.log('    → Valid for:', Math.floor(DEADLINE_SECONDS / 60), 'minutes');
+    console.log('  Arg 4 - maxPaymentAmount (uint256):', maxPaymentAmount.toString());
+    console.log('    → Current Price:', currentPrice.toString());
+    console.log('    → Slippage:', SLIPPAGE_PERCENT + '%');
+    console.log('  RPC URL:', env.rpcUrl);
 
-    // DON'T set step before calling takeoverWrite - this prevents blocking the Farcaster wallet modal
-    // The step will be set by the isPending state change
-
-    console.log('📝 Calling takeoverWrite with params:', {
-      address: env.televisionAddress,
-      functionName: 'takeover',
-      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
-    });
-
-    takeoverWrite({
+    const txParams = {
       address: env.televisionAddress,
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
       chainId: env.chainId,
-    });
+    };
+
+    console.log('📝 Full wagmi writeContract params:', JSON.stringify({
+      ...txParams,
+      abi: '[ABI_HIDDEN]',
+    }, null, 2));
+
+    takeoverWrite(txParams);
 
     console.log('✅ takeoverWrite called');
   }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite]);
@@ -565,7 +583,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
                   : !isValidUrl
                   ? 'Enter Valid URL'
                   : currentPrice !== undefined
-                  ? `Takeover ${currentPrice > 0n ? `for ${formatPrice(currentPrice)} USDC` : '(Free)'}`
+                  ? 'Takeover'
                   : 'Loading...'}
               </button>
             )}
