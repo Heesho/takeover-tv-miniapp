@@ -88,12 +88,13 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // USDC Balance
   const { data: usdcBalance, refetch: refetchBalance } = useReadContract({
-    address: env.usdcAddress as Address,
+    address: env.usdcAddress,
     abi: MOCK_USDC_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: env.chainId,
     query: {
+      enabled: !!address, // Only query when address is available
       refetchInterval: 3000,
     },
   });
@@ -105,6 +106,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     functionName: 'allowance',
     args: address && quoteToken ? [address, env.televisionAddress] : undefined,
     chainId: env.chainId,
+    query: {
+      enabled: !!(address && quoteToken), // Only query when both are available
+    },
   });
 
   // Mint USDC transaction
@@ -247,10 +251,10 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     // The step will be set by the isPending state change
 
     approveWrite({
-      address: quoteToken as Address,
+      address: quoteToken,
       abi: erc20ABI,
       functionName: 'approve',
-      args: [env.televisionAddress as Address, currentPrice],
+      args: [env.televisionAddress, currentPrice],
       chainId: env.chainId,
     });
   }, [quoteToken, currentPrice, approveWrite]);
@@ -291,7 +295,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     });
 
     takeoverWrite({
-      address: env.televisionAddress as Address,
+      address: env.televisionAddress,
       abi: televisionABI,
       functionName: 'takeover',
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
@@ -422,7 +426,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     });
 
     mintUsdc({
-      address: env.usdcAddress as Address,
+      address: env.usdcAddress,
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],

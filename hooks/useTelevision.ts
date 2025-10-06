@@ -17,6 +17,7 @@ export function useCurrentChannel() {
     address: env.televisionAddress,
     abi: televisionABI,
     eventName: 'Television__Takeover',
+    chainId: env.chainId,
     onLogs: () => {
       refetch();
     },
@@ -103,6 +104,7 @@ export function useTakeoverEvents(onTakeover?: (channelOwner: Address, paymentAm
     address: env.televisionAddress,
     abi: televisionABI,
     eventName: 'Television__Takeover',
+    chainId: env.chainId,
     onLogs: (logs) => {
       for (const log of logs) {
         if (log.args.channelOwner && log.args.paymentAmount !== undefined) {
