@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useReadContract, useWalletClient } from 'wagmi';
 import type { Address } from 'viem';
 import { isValidYouTubeUrl } from '@/utils/youtube';
 import { televisionABI, erc20ABI } from '@/contracts/television-abi';
@@ -71,6 +71,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // Account and chain
   const { address, isConnected, chainId } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const { epochId } = useCurrentChannel();
 
   // Log chain info for debugging
@@ -119,25 +120,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     },
   });
 
-  // Mint USDC transaction
-  const {
-    writeContract: mintUsdc,
-    data: mintHash,
-    reset: resetMint,
-  } = useWriteContract();
+  // Transaction state management
+  const [mintHash, setMintHash] = useState<Address | undefined>();
+  const [approveHash, setApproveHash] = useState<Address | undefined>();
+  const [takeoverHash, setTakeoverHash] = useState<Address | undefined>();
+  const [approveError, setApproveError] = useState<Error | null>(null);
+  const [takeoverError, setTakeoverError] = useState<Error | null>(null);
+  const [isApprovePending, setIsApprovePending] = useState(false);
+  const [isTakeoverPending, setIsTakeoverPending] = useState(false);
 
   const { isSuccess: isMintSuccess } = useWaitForTransactionReceipt({
     hash: mintHash
   });
-
-  // Approve transaction
-  const {
-    writeContract: approveWrite,
-    data: approveHash,
-    error: approveError,
-    isPending: isApprovePending,
-    reset: resetApprove,
-  } = useWriteContract();
 
   const {
     isLoading: isApproveLoading,
@@ -146,15 +140,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     hash: approveHash,
   });
 
-  // Takeover transaction
-  const {
-    writeContract: takeoverWrite,
-    data: takeoverHash,
-    error: takeoverError,
-    isPending: isTakeoverPending,
-    reset: resetTakeover,
-  } = useWriteContract();
-
   const {
     isLoading: isTakeoverLoading,
     isSuccess: isTakeoverSuccess,
@@ -162,6 +147,22 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   } = useWaitForTransactionReceipt({
     hash: takeoverHash,
   });
+
+  const resetApprove = useCallback(() => {
+    setApproveHash(undefined);
+    setApproveError(null);
+    setIsApprovePending(false);
+  }, []);
+
+  const resetTakeover = useCallback(() => {
+    setTakeoverHash(undefined);
+    setTakeoverError(null);
+    setIsTakeoverPending(false);
+  }, []);
+
+  const resetMint = useCallback(() => {
+    setMintHash(undefined);
+  }, []);
 
   // Debug receipt state
   useEffect(() => {
@@ -243,9 +244,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   }, [resetApprove, resetTakeover]);
 
   // Execute approve
-  const executeApprove = useCallback(() => {
-    if (!quoteToken || !currentPrice) {
-      console.error('❌ Missing quoteToken or currentPrice');
+  const executeApprove = useCallback(async () => {
+    if (!quoteToken || !currentPrice || !walletClient) {
+      console.error('❌ Missing quoteToken, currentPrice, or walletClient');
       return;
     }
 
@@ -255,70 +256,73 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       amount: currentPrice.toString(),
     });
 
-    // DON'T set step before calling approveWrite - this prevents blocking the Farcaster wallet modal
-    // The step will be set by the isPending state change
+    try {
+      setIsApprovePending(true);
+      setApproveError(null);
 
-    approveWrite({
-      address: quoteToken,
-      abi: erc20ABI,
-      functionName: 'approve',
-      args: [env.televisionAddress, currentPrice],
-    });
-  }, [quoteToken, currentPrice, approveWrite]);
+      const hash = await walletClient.writeContract({
+        address: quoteToken,
+        abi: erc20ABI,
+        functionName: 'approve',
+        args: [env.televisionAddress, currentPrice],
+      });
+
+      console.log('✅ Approve transaction sent:', hash);
+      setApproveHash(hash);
+    } catch (error) {
+      console.error('❌ Approve failed:', error);
+      setApproveError(error as Error);
+      setIsApprovePending(false);
+    }
+  }, [quoteToken, currentPrice, walletClient]);
 
   // Execute takeover
-  const executeTakeover = useCallback(() => {
-    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined) {
+  const executeTakeover = useCallback(async () => {
+    if (!isValidUrl || !youtubeUrl || !address || currentPrice === undefined || epochId === undefined || !walletClient) {
       console.error('❌ Missing required parameters for takeover', {
         isValidUrl,
         youtubeUrl,
         address,
         currentPrice: currentPrice?.toString(),
         epochId,
+        walletClient: !!walletClient,
       });
       return;
     }
 
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const deadline = BigInt(currentTimestamp + DEADLINE_SECONDS);
-    // No slippage - just use current price
     const maxPaymentAmount = currentPrice;
 
     console.log('🔄 Executing takeover...');
     console.log('📋 DETAILED TRANSACTION PARAMETERS:');
     console.log('  Contract Address:', env.televisionAddress);
-    console.log('  Chain ID:', env.chainId);
     console.log('  Function:', 'takeover');
     console.log('  Arg 0 - uri (string):', youtubeUrl);
     console.log('  Arg 1 - channelOwner (address):', address);
     console.log('  Arg 2 - epochId (uint256):', BigInt(epochId).toString());
     console.log('  Arg 3 - deadline (uint256):', deadline.toString());
-    console.log('    → Current timestamp:', currentTimestamp);
-    console.log('    → Deadline in seconds:', DEADLINE_SECONDS);
-    console.log('    → Deadline timestamp:', currentTimestamp + DEADLINE_SECONDS);
-    console.log('    → Valid for:', Math.floor(DEADLINE_SECONDS / 60), 'minutes');
     console.log('  Arg 4 - maxPaymentAmount (uint256):', maxPaymentAmount.toString());
-    console.log('    → Current Price:', currentPrice.toString());
-    console.log('  RPC URL:', env.rpcUrl);
 
-    const txParams = {
-      address: env.televisionAddress,
-      abi: televisionABI,
-      functionName: 'takeover' as const,
-      args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount] as const,
-    };
+    try {
+      setIsTakeoverPending(true);
+      setTakeoverError(null);
 
-    console.log('📝 Full wagmi writeContract params:', JSON.stringify({
-      address: txParams.address,
-      functionName: txParams.functionName,
-      args: txParams.args.map(arg => typeof arg === 'bigint' ? arg.toString() : arg),
-      abi: '[ABI_HIDDEN]',
-    }, null, 2));
+      const hash = await walletClient.writeContract({
+        address: env.televisionAddress,
+        abi: televisionABI,
+        functionName: 'takeover',
+        args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount],
+      });
 
-    takeoverWrite(txParams);
-
-    console.log('✅ takeoverWrite called');
-  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, takeoverWrite]);
+      console.log('✅ Takeover transaction sent:', hash);
+      setTakeoverHash(hash);
+    } catch (error) {
+      console.error('❌ Takeover failed:', error);
+      setTakeoverError(error as Error);
+      setIsTakeoverPending(false);
+    }
+  }, [isValidUrl, youtubeUrl, address, currentPrice, epochId, walletClient]);
 
   // Track transaction steps based on pending/loading states
   useEffect(() => {
@@ -428,9 +432,9 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
   ]);
 
   // Handle mint USDC
-  const handleMintUsdc = useCallback(() => {
-    if (!address) {
-      console.warn('⚠️ No address for minting');
+  const handleMintUsdc = useCallback(async () => {
+    if (!address || !walletClient) {
+      console.warn('⚠️ No address or walletClient for minting');
       return;
     }
 
@@ -439,13 +443,20 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       amount: MINT_AMOUNT,
     });
 
-    mintUsdc({
-      address: env.usdcAddress,
-      abi: MOCK_USDC_ABI,
-      functionName: 'mint',
-      args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
-    });
-  }, [address, mintUsdc]);
+    try {
+      const hash = await walletClient.writeContract({
+        address: env.usdcAddress,
+        abi: MOCK_USDC_ABI,
+        functionName: 'mint',
+        args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
+      });
+
+      console.log('✅ Mint transaction sent:', hash);
+      setMintHash(hash);
+    } catch (error) {
+      console.error('❌ Mint failed:', error);
+    }
+  }, [address, walletClient]);
 
   // Format price helper
   const formatPrice = (price: bigint | undefined): string => {
