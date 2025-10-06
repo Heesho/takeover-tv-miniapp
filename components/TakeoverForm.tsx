@@ -314,19 +314,18 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     }
   }, [isApprovePending, isApproveLoading, isTakeoverPending, isTakeoverLoading]);
 
-  // Handle approve success -> trigger takeover
+  // Handle approve success -> just refetch allowance
   useEffect(() => {
     if (isApproveSuccess && transactionStep === 'approving') {
-      console.log('✅ Approve successful, starting takeover...');
+      console.log('✅ Approve successful! Allowance updated.');
       refetchAllowance();
-
-      // Add a small delay to let the connector stabilize after approve
+      // Reset to idle so user can click Takeover button
       setTimeout(() => {
-        console.log('🔄 Triggering takeover after approve...');
-        executeTakeover();
-      }, 500);
+        setTransactionStep('idle');
+        resetApprove();
+      }, 1000);
     }
-  }, [isApproveSuccess, transactionStep, executeTakeover, refetchAllowance]);
+  }, [isApproveSuccess, transactionStep, refetchAllowance, resetApprove]);
 
   // Handle takeover success
   useEffect(() => {
@@ -539,31 +538,61 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
               className="w-full px-3 py-2 bg-gray-800/50 text-white text-xs rounded border border-gray-700 focus:border-gray-500 focus:outline-none placeholder-gray-600"
             />
 
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={!isValidUrl || currentPrice === undefined || !isConnected}
-              className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
-              style={{ color: !isValidUrl || currentPrice === undefined || !isConnected ? undefined : '#000000' }}
-            >
-              {!isConnected
-                ? 'Connect Wallet First'
-                : currentPrice !== undefined
-                ? 'Takeover'
-                : 'Loading...'}
-            </button>
-
-            {/* Balance & Mint */}
-            <div className="flex items-center justify-between text-[10px] pt-1">
-              <span className="text-gray-500">
-                Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}
-              </span>
+            {/* Action Buttons - Separate Approve and Takeover */}
+            {currentPrice !== undefined && currentPrice > 0n && (!allowance || allowance < currentPrice) ? (
+              /* Show Approve Button */
               <button
-                onClick={handleMintUsdc}
-                className="bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
+                onClick={executeApprove}
+                disabled={!isValidUrl || !isConnected || !quoteToken}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-white font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
               >
-                Mint ${MINT_AMOUNT}
+                {!isConnected
+                  ? 'Connect Wallet First'
+                  : !isValidUrl
+                  ? 'Enter Valid URL'
+                  : `Approve ${formatPrice(currentPrice)} USDC`}
               </button>
+            ) : (
+              /* Show Takeover Button */
+              <button
+                onClick={executeTakeover}
+                disabled={!isValidUrl || currentPrice === undefined || !isConnected}
+                className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:text-gray-500 text-black font-bold py-2 px-4 rounded text-xs transition-colors uppercase tracking-wide"
+                style={{ color: !isValidUrl || currentPrice === undefined || !isConnected ? undefined : '#000000' }}
+              >
+                {!isConnected
+                  ? 'Connect Wallet First'
+                  : !isValidUrl
+                  ? 'Enter Valid URL'
+                  : currentPrice !== undefined
+                  ? `Takeover ${currentPrice > 0n ? `for ${formatPrice(currentPrice)} USDC` : '(Free)'}`
+                  : 'Loading...'}
+              </button>
+            )}
+
+            {/* Balance, Allowance & Mint */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-gray-500">
+                  Balance: ${usdcBalance ? formatPrice(usdcBalance) : '0.00'}
+                </span>
+                <button
+                  onClick={handleMintUsdc}
+                  className="bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-400 hover:text-white transition-colors"
+                >
+                  Mint ${MINT_AMOUNT}
+                </button>
+              </div>
+              {currentPrice !== undefined && currentPrice > 0n && (
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-gray-500">
+                    Approved: ${allowance ? formatPrice(allowance) : '0.00'}
+                  </span>
+                  <span className={allowance && allowance >= currentPrice ? 'text-green-500' : 'text-gray-500'}>
+                    {allowance && allowance >= currentPrice ? '✓ Ready' : 'Need approval'}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
