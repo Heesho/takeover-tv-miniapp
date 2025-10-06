@@ -71,7 +71,7 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
   // Account and chain
   const { address, isConnected, chainId } = useAccount();
-  const { data: walletClient } = useWalletClient();
+  const { data: walletClient } = useWalletClient({ chainId: env.chainId });
   const { epochId } = useCurrentChannel();
 
   // Log chain info for debugging
