@@ -265,7 +265,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: erc20ABI,
       functionName: 'approve',
       args: [env.televisionAddress, currentPrice],
-      chainId: env.chainId,
     });
   }, [quoteToken, currentPrice, approveWrite]);
 
@@ -284,8 +283,8 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
 
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const deadline = BigInt(currentTimestamp + DEADLINE_SECONDS);
-    // For $0 price, no slippage needed
-    const maxPaymentAmount = currentPrice === 0n ? 0n : currentPrice + (currentPrice * BigInt(SLIPPAGE_PERCENT)) / BigInt(100);
+    // No slippage - just use current price
+    const maxPaymentAmount = currentPrice;
 
     console.log('🔄 Executing takeover...');
     console.log('📋 DETAILED TRANSACTION PARAMETERS:');
@@ -302,7 +301,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
     console.log('    → Valid for:', Math.floor(DEADLINE_SECONDS / 60), 'minutes');
     console.log('  Arg 4 - maxPaymentAmount (uint256):', maxPaymentAmount.toString());
     console.log('    → Current Price:', currentPrice.toString());
-    console.log('    → Slippage:', SLIPPAGE_PERCENT + '%');
     console.log('  RPC URL:', env.rpcUrl);
 
     const txParams = {
@@ -310,7 +308,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: televisionABI,
       functionName: 'takeover' as const,
       args: [youtubeUrl, address, BigInt(epochId), deadline, maxPaymentAmount] as const,
-      chainId: env.chainId,
     };
 
     console.log('📝 Full wagmi writeContract params:', JSON.stringify({
@@ -450,7 +447,6 @@ export function TakeoverForm({ currentPrice, quoteToken, onSuccess }: TakeoverFo
       abi: MOCK_USDC_ABI,
       functionName: 'mint',
       args: [address, BigInt(MINT_AMOUNT * 10 ** USDC_DECIMALS)],
-      chainId: env.chainId,
     });
   }, [address, mintUsdc]);
 
