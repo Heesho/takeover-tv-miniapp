@@ -34,21 +34,29 @@ export function TakeoverForm({
   const needsApproval = userAllowance < currentPrice;
   const hasInsufficientBalance = currentPrice > userBalance;
 
-  const handleSubmit = async () => {
+  const handleApprove = async () => {
     if (!isValidUrl) return;
 
     try {
-      if (needsApproval) {
-        setMessage('Approving USDC...');
-        await onApprove(currentPrice);
-        setMessage('Approval successful! Now executing takeover...');
-      }
+      setMessage('Approving USDC...');
+      await onApprove(currentPrice);
+      setMessage('Approval successful! Click TAKEOVER to continue.');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Approval failed:', error);
+      setMessage('Approval failed. Please try again.');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
 
+  const handleTakeover = async () => {
+    if (!isValidUrl) return;
+
+    try {
       setMessage('Executing Takeover...');
       await onTakeover(url);
       setMessage('TAKEOVER SUCCESSFUL!');
       setUrl('');
-
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Takeover failed:', error);
@@ -60,8 +68,13 @@ export function TakeoverForm({
   const getButtonText = () => {
     if (!isValidUrl) return 'ENTER A VALID URL';
     if (hasInsufficientBalance) return 'INSUFFICIENT BALANCE';
-    if (needsApproval) return 'APPROVE & TAKEOVER';
+    if (needsApproval) return 'APPROVE';
     return 'TAKEOVER';
+  };
+
+  const getButtonAction = () => {
+    if (needsApproval) return handleApprove;
+    return handleTakeover;
   };
 
   const isButtonDisabled = !isValidUrl || hasInsufficientBalance || isPending || isApprovePending;
@@ -106,9 +119,9 @@ export function TakeoverForm({
         />
       </div>
 
-      {/* Takeover Button */}
+      {/* Action Button */}
       <button
-        onClick={handleSubmit}
+        onClick={getButtonAction()}
         disabled={isButtonDisabled}
         className="w-full p-2.5 rounded-lg takeover-button font-bold transition-opacity disabled:opacity-50"
       >
@@ -123,8 +136,9 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Takeover the TV to broadcast your video. Price doubles on takeover then drops to $0 over 1
-        hour.
+        {needsApproval
+          ? 'First approve USDC spending, then takeover the TV.'
+          : 'Takeover the TV to broadcast your video. Price doubles on takeover then drops to $0 over 1 hour.'}
       </p>
 
       {/* Message Overlay */}
