@@ -1,13 +1,13 @@
 import { http, createConfig } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
-import { env } from '@/utils/env';
 
-// Create Wagmi config for Base Sepolia
+const ALCHEMY_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/maEamUgoT5NkZA3J9bXV9';
+
 export const config = createConfig({
   chains: [baseSepolia],
   transports: {
-    [baseSepolia.id]: http(env.rpcUrl),
+    [baseSepolia.id]: http(ALCHEMY_RPC_URL),
   },
   connectors: [farcasterMiniApp()],
 });

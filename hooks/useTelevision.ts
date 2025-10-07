@@ -1,110 +1,160 @@
-import { useEffect, useState } from 'react';
-import { useReadContract, useWatchContractEvent, usePublicClient } from 'wagmi';
-import { televisionABI } from '@/contracts/television-abi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { televisionAbi } from '@/contracts/television-abi';
+import { usdcAbi } from '@/contracts/usdc-abi';
 import { env } from '@/utils/env';
-import type { Address } from 'viem';
 
-export function useCurrentChannel() {
-  const { data, isLoading, refetch } = useReadContract({
-    address: env.televisionAddress,
-    abi: televisionABI,
-    functionName: 'getSlot0',
-  });
-
-  // Watch for Takeover events to refetch
-  useWatchContractEvent({
-    address: env.televisionAddress,
-    abi: televisionABI,
-    eventName: 'Television__Takeover',
-    onLogs: () => {
-      refetch();
-    },
-  });
-
-  return {
-    owner: data?.owner as Address | undefined,
-    uri: data?.uri as string | undefined,
-    epochId: data?.epochId !== undefined ? Number(data.epochId) : undefined,
-    isLoading,
-    refetch,
-  };
+interface Slot0 {
+  locked: number;
+  epochId: number;
+  initPrice: bigint;
+  startTime: bigint;
+  owner: string;
+  uri: string;
 }
 
-export function useCurrentPrice() {
-  const [price, setPrice] = useState<bigint | undefined>();
+interface UseTelevisionReturn {
+  // Channel data
+  slot0: Slot0 | null;
+  currentPrice: bigint;
+  isLoading: boolean;
+  error: Error | null;
 
-  // Get slot0 data for initPrice and startTime
-  const { data: slot0Data } = useReadContract({
-    address: env.televisionAddress,
-    abi: televisionABI,
+  // User balance
+  userBalance: bigint;
+  userAllowance: bigint;
+
+  // Actions
+  takeover: (uri: string) => Promise<void>;
+  approve: (amount: bigint) => Promise<void>;
+
+  // Transaction states
+  isTakeoverPending: boolean;
+  isApprovePending: boolean;
+  takeoverError: Error | null;
+  approveError: Error | null;
+}
+
+/**
+ * Hook to interact with the Television smart contract
+ */
+export function useTelevision(): UseTelevisionReturn {
+  const { address } = useAccount();
+
+  // Read current slot0 (channel data)
+  const { data: slot0Data, isLoading: isSlot0Loading, error: slot0Error, refetch: refetchSlot0 } = useReadContract({
+    address: env.televisionContract,
+    abi: televisionAbi,
     functionName: 'getSlot0',
   });
 
-  const { data: contractPrice, isLoading } = useReadContract({
-    address: env.televisionAddress,
-    abi: televisionABI,
+  // Read current price from contract
+  const { data: currentPrice = 0n, refetch: refetchPrice } = useReadContract({
+    address: env.televisionContract,
+    abi: televisionAbi,
     functionName: 'getPrice',
   });
 
-  // Client-side price decay calculation
-  useEffect(() => {
-    if (!slot0Data?.initPrice || !slot0Data?.startTime) {
-      setPrice(contractPrice);
-      return;
-    }
-
-    const initPrice = slot0Data.initPrice as bigint;
-    const startTime = Number(slot0Data.startTime);
-    const EPOCH_PERIOD = 60 * 60; // 1 hour in seconds
-
-    const updatePrice = () => {
-      const now = Math.floor(Date.now() / 1000);
-      const timePassed = now - startTime;
-
-      if (timePassed >= EPOCH_PERIOD) {
-        setPrice(0n);
-        return;
-      }
-
-      // Linear decay: price = initPrice - (initPrice * timePassed / EPOCH_PERIOD)
-      const decayedPrice = initPrice - (initPrice * BigInt(timePassed)) / BigInt(EPOCH_PERIOD);
-      const finalPrice = decayedPrice > 0n ? decayedPrice : 0n;
-      setPrice(finalPrice);
-    };
-
-    // Update immediately
-    updatePrice();
-
-    // Update every second for smooth countdown
-    const interval = setInterval(updatePrice, 1000);
-
-    return () => clearInterval(interval);
-  }, [slot0Data, contractPrice]);
-
-  return { price, isLoading };
-}
-
-export function useQuoteToken() {
-  const { data: quoteToken } = useReadContract({
-    address: env.televisionAddress,
-    abi: televisionABI,
-    functionName: 'quote',
+  // Read user's USDC balance
+  const { data: userBalance = 0n } = useReadContract({
+    address: env.usdcContract,
+    abi: usdcAbi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
   });
 
-  return quoteToken as Address | undefined;
-}
-
-export function useTakeoverEvents(onTakeover?: (channelOwner: Address, paymentAmount: bigint) => void) {
-  useWatchContractEvent({
-    address: env.televisionAddress,
-    abi: televisionABI,
-    eventName: 'Television__Takeover',
-    onLogs: (logs) => {
-      for (const log of logs) {
-        if (log.args.channelOwner && log.args.paymentAmount !== undefined) {
-          onTakeover?.(log.args.channelOwner, log.args.paymentAmount);
-        }
-      }
-    },
+  // Read user's USDC allowance for the Television contract
+  const { data: userAllowance = 0n } = useReadContract({
+    address: env.usdcContract,
+    abi: usdcAbi,
+    functionName: 'allowance',
+    args: address ? [address, env.televisionContract] : undefined,
   });
+
+  // Write contracts
+  const {
+    writeContract: writeApprove,
+    data: approveHash,
+    isPending: isApprovePending,
+    error: approveWriteError,
+  } = useWriteContract();
+
+  const {
+    writeContract: writeTakeover,
+    data: takeoverHash,
+    isPending: isTakeoverPending,
+    error: takeoverWriteError,
+  } = useWriteContract();
+
+  // Wait for approve transaction
+  const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({
+    hash: approveHash,
+  });
+
+  // Wait for takeover transaction
+  const { isLoading: isTakeoverConfirming, isSuccess: isTakeoverSuccess } = useWaitForTransactionReceipt({
+    hash: takeoverHash,
+  });
+
+  // Refetch data after successful takeover
+  if (isTakeoverSuccess) {
+    refetchSlot0();
+    refetchPrice();
+  }
+
+  // Actions
+  const approve = async (amount: bigint) => {
+    if (!address) throw new Error('Wallet not connected');
+
+    writeApprove({
+      address: env.usdcContract,
+      abi: usdcAbi,
+      functionName: 'approve',
+      args: [env.televisionContract, amount],
+    });
+  };
+
+  const takeover = async (uri: string) => {
+    if (!address) throw new Error('Wallet not connected');
+    if (!slot0Data) throw new Error('Channel data not loaded');
+
+    // Calculate deadline: 10 minutes from now
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+
+    // Set max payment amount: current price + 10% buffer to prevent front-running
+    const maxPaymentAmount = currentPrice + (currentPrice * 10n) / 100n;
+
+    writeTakeover({
+      address: env.televisionContract,
+      abi: televisionAbi,
+      functionName: 'takeover',
+      args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
+    });
+  };
+
+  // Parse slot0 data
+  const slot0: Slot0 | null = slot0Data
+    ? {
+        locked: Number(slot0Data.locked),
+        epochId: Number(slot0Data.epochId),
+        initPrice: slot0Data.initPrice,
+        startTime: slot0Data.startTime,
+        owner: slot0Data.owner,
+        uri: slot0Data.uri,
+      }
+    : null;
+
+  return {
+    slot0,
+    currentPrice,
+    isLoading: isSlot0Loading,
+    error: slot0Error as Error | null,
+    userBalance,
+    userAllowance,
+    takeover,
+    approve,
+    isTakeoverPending: isTakeoverPending || isTakeoverConfirming,
+    isApprovePending: isApprovePending || isApproveConfirming,
+    takeoverError: takeoverWriteError as Error | null,
+    approveError: approveWriteError as Error | null,
+  };
 }

@@ -1,14 +1,17 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  async rewrites() {
-    return [
+  images: {
+    remotePatterns: [
       {
-        source: '/.well-known/farcaster.json',
-        destination: '/api/manifest',
+        protocol: 'https',
+        hostname: 'i.imgur.com',
       },
-    ];
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+    ],
   },
 };
 

@@ -1,29 +1,51 @@
 import { useEffect, useState } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 
-type MiniAppContext = Awaited<typeof sdk.context>;
+interface FarcasterUser {
+  fid: number;
+  username: string;
+  displayName: string;
+  pfpUrl: string;
+}
 
-export function useFarcasterContext() {
-  const [context, setContext] = useState<MiniAppContext | null>(null);
+interface FarcasterContext {
+  user: FarcasterUser | null;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+/**
+ * Hook to access Farcaster user context from the Mini App SDK
+ */
+export function useFarcasterContext(): FarcasterContext {
+  const [user, setUser] = useState<FarcasterUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    sdk.context.then(setContext);
+    async function loadContext() {
+      try {
+        const context = await sdk.context;
+
+        if (context?.user) {
+          setUser({
+            fid: context.user.fid,
+            username: context.user.username || '',
+            displayName: context.user.displayName || '',
+            pfpUrl: context.user.pfpUrl || '',
+          });
+        }
+
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Failed to load Farcaster context:', err);
+        setError(err instanceof Error ? err : new Error('Failed to load context'));
+        setIsLoading(false);
+      }
+    }
+
+    loadContext();
   }, []);
 
-  return context;
-}
-
-export function useFarcasterUser() {
-  const context = useFarcasterContext();
-  return context?.user;
-}
-
-export function useFarcasterClient() {
-  const context = useFarcasterContext();
-  return context?.client;
-}
-
-export function useFarcasterFeatures() {
-  const context = useFarcasterContext();
-  return context?.features;
+  return { user, isLoading, error };
 }

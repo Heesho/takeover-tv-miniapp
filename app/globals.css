@@ -1,291 +1,335 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-background: #000000;
-  --color-foreground: #ffffff;
-
-  --animate-static: static 0.1s ease-in-out infinite;
-}
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #000000;
-    --foreground: #ffffff;
-  }
+  --main-bg: #000000;
+  --accent-color: #ff00ff;
+  --text-color: #ffffff;
+  --border-color: #444;
+  --container-bg: #111;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Force grayscale - remove ALL colors */
-* {
-  accent-color: #6b7280 !important;
-}
-
-/* Override ANY colored backgrounds */
-.bg-red-600, .bg-red-700,
-.bg-green-500, .bg-green-600,
-.bg-blue-500, .bg-blue-600,
-.bg-purple-600, .bg-purple-700 {
-  background-color: #6b7280 !important;
-}
-
-/* Override ANY colored text */
-.text-red-400, .text-red-500,
-.text-green-500, .text-green-600,
-.text-blue-500, .text-blue-600 {
-  color: #9ca3af !important;
-}
-
-/* Override ANY colored borders */
-.border-red-500, .border-red-600,
-.border-green-500, .border-green-600,
-.border-blue-500, .border-blue-600 {
-  border-color: #6b7280 !important;
-}
-
-a {
-  color: inherit !important;
-}
-
-input, select, textarea {
-  color: inherit !important;
-  caret-color: #ffffff !important;
-}
-
-/* Remove default blue focus rings */
-*:focus {
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-*:focus-visible {
-  outline: 2px solid #6b7280 !important;
-  outline-offset: 2px;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-/* TV Static Effect */
-.tv-static {
-  background: #000;
-  position: relative;
+  font-family: 'VT323', monospace;
+  background-color: var(--main-bg);
+  color: var(--text-color);
   overflow: hidden;
 }
 
-.tv-static::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E");
-  opacity: 0.25;
-  animation: static-flicker 0.1s infinite steps(1);
-  z-index: 1;
+/* TV Border styling */
+.tv-border {
+  border-radius: 1.5rem;
+  background-color: var(--container-bg);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.tv-static::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0.15) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-  opacity: 0.6;
-  z-index: 2;
+/* Takeover Button styling */
+.takeover-button {
+  background-color: var(--accent-color);
+  color: var(--main-bg);
+  text-shadow: 0 0 2px var(--main-bg);
+  box-shadow: 0 0 8px var(--accent-color);
+  transition: all 0.2s ease-in-out;
+  font-size: 1.1rem;
 }
 
-@keyframes static-flicker {
-  0% { background-position: 0% 0%; }
-  10% { background-position: -5% -10%; }
-  20% { background-position: -15% 5%; }
-  30% { background-position: 7% -25%; }
-  40% { background-position: 20% 25%; }
-  50% { background-position: -25% 10%; }
-  60% { background-position: 15% -20%; }
-  70% { background-position: -10% 15%; }
-  80% { background-position: 25% 5%; }
-  90% { background-position: 10% -15%; }
-  100% { background-position: -20% 20%; }
+.takeover-button:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 0 15px var(--accent-color);
+  transform: scale(1.02);
+}
+
+.takeover-button:disabled {
+  background-color: #333;
+  color: #777;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Input styling */
+input[type='text'] {
+  transition: all 0.2s ease-in-out;
+}
+
+input[type='text']:focus {
+  box-shadow: 0 0 8px var(--accent-color);
 }
 
 /* Glitch Text Effect */
 .glitch-text {
   position: relative;
-  animation: glitch-anim 3s infinite;
+  animation: glitch 1s linear infinite;
 }
 
-.glitch-text::before,
-.glitch-text::after {
+@keyframes glitch {
+  2%,
+  64% {
+    transform: translate(0, 0) skew(0deg);
+  }
+  4%,
+  60% {
+    transform: translate(0, 0) skew(0deg);
+  }
+  62% {
+    transform: translate(0, 0) skew(5deg);
+  }
+}
+
+.glitch-text:before,
+.glitch-text:after {
   content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--container-bg);
+  overflow: hidden;
+  clip: rect(0, 900px, 0, 0);
+}
+
+.glitch-text:before {
+  left: 2px;
+  text-shadow: -2px 0 var(--accent-color);
+  animation: noise-anim-2 3s linear infinite alternate-reverse;
+}
+
+.glitch-text:after {
+  left: -2px;
+  text-shadow: -2px 0 #00ffff, 2px 2px var(--accent-color);
+  animation: noise-anim 2s linear infinite alternate-reverse;
+}
+
+@keyframes noise-anim {
+  0% {
+    clip: rect(23px, 9999px, 92px, 0);
+  }
+  5% {
+    clip: rect(33px, 9999px, 80px, 0);
+  }
+  10% {
+    clip: rect(10px, 9999px, 90px, 0);
+  }
+  15% {
+    clip: rect(45px, 9999px, 75px, 0);
+  }
+  20% {
+    clip: rect(65px, 9999px, 20px, 0);
+  }
+  25% {
+    clip: rect(80px, 9999px, 45px, 0);
+  }
+  30% {
+    clip: rect(15px, 9999px, 85px, 0);
+  }
+  35% {
+    clip: rect(95px, 9999px, 35px, 0);
+  }
+  40% {
+    clip: rect(55px, 9999px, 60px, 0);
+  }
+  45% {
+    clip: rect(25px, 9999px, 70px, 0);
+  }
+  50% {
+    clip: rect(75px, 9999px, 30px, 0);
+  }
+  55% {
+    clip: rect(40px, 9999px, 90px, 0);
+  }
+  60% {
+    clip: rect(60px, 9999px, 10px, 0);
+  }
+  65% {
+    clip: rect(85px, 9999px, 50px, 0);
+  }
+  70% {
+    clip: rect(5px, 9999px, 75px, 0);
+  }
+  75% {
+    clip: rect(90px, 9999px, 25px, 0);
+  }
+  80% {
+    clip: rect(20px, 9999px, 65px, 0);
+  }
+  85% {
+    clip: rect(70px, 9999px, 40px, 0);
+  }
+  90% {
+    clip: rect(30px, 9999px, 80px, 0);
+  }
+  95% {
+    clip: rect(50px, 9999px, 15px, 0);
+  }
+  100% {
+    clip: rect(80px, 9999px, 23px, 0);
+  }
+}
+
+@keyframes noise-anim-2 {
+  0% {
+    clip: rect(85px, 9999px, 100px, 0);
+  }
+  5% {
+    clip: rect(70px, 9999px, 5px, 0);
+  }
+  10% {
+    clip: rect(40px, 9999px, 25px, 0);
+  }
+  15% {
+    clip: rect(15px, 9999px, 90px, 0);
+  }
+  20% {
+    clip: rect(50px, 9999px, 30px, 0);
+  }
+  25% {
+    clip: rect(20px, 9999px, 80px, 0);
+  }
+  30% {
+    clip: rect(95px, 9999px, 45px, 0);
+  }
+  35% {
+    clip: rect(35px, 9999px, 70px, 0);
+  }
+  40% {
+    clip: rect(65px, 9999px, 10px, 0);
+  }
+  45% {
+    clip: rect(80px, 9999px, 55px, 0);
+  }
+  50% {
+    clip: rect(10px, 9999px, 95px, 0);
+  }
+  55% {
+    clip: rect(75px, 9999px, 40px, 0);
+  }
+  60% {
+    clip: rect(30px, 9999px, 85px, 0);
+  }
+  65% {
+    clip: rect(55px, 9999px, 20px, 0);
+  }
+  70% {
+    clip: rect(90px, 9999px, 60px, 0);
+  }
+  75% {
+    clip: rect(25px, 9999px, 75px, 0);
+  }
+  80% {
+    clip: rect(45px, 9999px, 50px, 0);
+  }
+  85% {
+    clip: rect(80px, 9999px, 5px, 0);
+  }
+  90% {
+    clip: rect(5px, 9999px, 90px, 0);
+  }
+  95% {
+    clip: rect(60px, 9999px, 35px, 0);
+  }
+  100% {
+    clip: rect(3px, 9999px, 50px, 0);
+  }
+}
+
+/* TV Static Effect */
+.tv-static::after {
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-.glitch-text::before {
-  left: 2px;
-  text-shadow: -2px 0 #ff00de;
-  clip: rect(44px, 450px, 56px, 0);
-  animation: glitch-anim-2 5s infinite linear alternate-reverse;
-}
-
-.glitch-text::after {
-  left: -2px;
-  text-shadow: -2px 0 #00fff9, 2px 2px #ff00de;
-  animation: glitch-anim-3 1s infinite linear alternate-reverse;
-}
-
-@keyframes glitch-anim {
-  0%, 100% {
-    transform: translate(0);
-  }
-  20% {
-    transform: translate(-2px, 2px);
-  }
-  40% {
-    transform: translate(-2px, -2px);
-  }
-  60% {
-    transform: translate(2px, 2px);
-  }
-  80% {
-    transform: translate(2px, -2px);
-  }
-}
-
-@keyframes glitch-anim-2 {
-  0% {
-    clip: rect(85px, 9999px, 20px, 0);
-  }
-  20% {
-    clip: rect(10px, 9999px, 100px, 0);
-  }
-  40% {
-    clip: rect(50px, 9999px, 30px, 0);
-  }
-  60% {
-    clip: rect(30px, 9999px, 90px, 0);
-  }
-  80% {
-    clip: rect(70px, 9999px, 60px, 0);
-  }
-  100% {
-    clip: rect(40px, 9999px, 80px, 0);
-  }
-}
-
-@keyframes glitch-anim-3 {
-  0% {
-    clip: rect(10px, 9999px, 100px, 0);
-  }
-  20% {
-    clip: rect(85px, 9999px, 20px, 0);
-  }
-  40% {
-    clip: rect(30px, 9999px, 90px, 0);
-  }
-  60% {
-    clip: rect(50px, 9999px, 30px, 0);
-  }
-  80% {
-    clip: rect(40px, 9999px, 80px, 0);
-  }
-  100% {
-    clip: rect(70px, 9999px, 60px, 0);
-  }
-}
-
-/* Scanlines Effect */
-.scanlines {
-  position: relative;
-}
-
-.scanlines::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0.03),
-    rgba(255, 255, 255, 0.03) 1px,
-    transparent 1px,
-    transparent 2px
-  );
+  background: repeating-linear-gradient(rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 3px),
+    repeating-radial-gradient(rgba(255, 255, 0.2) 0 1px, transparent 1px 3px);
+  background-size: 100% 3px, 50% 100%;
+  animation: tv-static-flicker 0.08s linear infinite;
+  opacity: 0;
   pointer-events: none;
-  z-index: 10;
-  animation: scan 8s linear infinite;
+  z-index: 1;
 }
 
-@keyframes scan {
+@keyframes tv-static-flicker {
   0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(10px);
-  }
-}
-
-/* Radial gradient for vignette */
-.bg-radial-gradient {
-  background: radial-gradient(circle, var(--tw-gradient-stops));
-}
-
-/* TV Power-On Animation */
-.tv-power-on {
-  animation: powerOn 1.5s ease-out forwards;
-  pointer-events: none;
-}
-
-@keyframes powerOn {
-  0% {
-    background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+    opacity: 0.2;
+    transform: translate(2px, 1px);
+    background-position: 0 0;
   }
   10% {
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 1%);
+    opacity: 0.3;
+    transform: translate(-1px, -1px);
+    background-position: 0 10px;
+  }
+  20% {
+    opacity: 0.2;
+    transform: translate(-3px, 0);
+    background-position: 0 20px;
   }
   30% {
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.6) 0%, transparent 5%);
+    opacity: 0.4;
+    transform: translate(0, 2px);
+    background-position: 0 30px;
+  }
+  40% {
+    opacity: 0.2;
+    transform: translate(1px, -1px);
+    background-position: 0 40px;
   }
   50% {
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 30%);
+    opacity: 0.5;
+    transform: translate(-1px, 2px);
+    background-position: 0 50px;
+  }
+  60% {
+    opacity: 0.2;
+    transform: translate(-3px, 1px);
+    background-position: 0 60px;
   }
   70% {
-    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 60%);
+    opacity: 0.3;
+    transform: translate(0, -2px);
+    background-position: 0 70px;
+  }
+  80% {
+    opacity: 0.2;
+    transform: translate(1px, 0);
+    background-position: 0 80px;
+  }
+  90% {
+    opacity: 0.4;
+    transform: translate(-1px, 1px);
+    background-position: 0 90px;
   }
   100% {
-    background: radial-gradient(circle at center, transparent 0%, transparent 100%);
+    opacity: 0.2;
+    transform: translate(0, 0);
+    background-position: 0 100px;
   }
 }
 
-/* App fade-in animation */
-.app-fade-in {
-  animation: fadeInApp 0.8s ease-out forwards;
+/* Scanline Effect */
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(20, 20, 20, 0.4) 50%, rgba(0, 0, 0, 0) 50%);
+  background-size: 100% 4px;
+  animation: scanline-anim 8s linear infinite;
+  pointer-events: none;
+  opacity: 0.3;
+  z-index: 1;
 }
 
-@keyframes fadeInApp {
-  0% {
-    opacity: 0;
+@keyframes scanline-anim {
+  from {
+    background-position: 0 0;
   }
-  100% {
-    opacity: 1;
+  to {
+    background-position: 0 -400px;
   }
 }

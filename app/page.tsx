@@ -1,200 +1,146 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAccount, useConnect } from 'wagmi';
+import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { StartOverlay } from '@/components/StartOverlay';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { ChannelInfo } from '@/components/ChannelInfo';
 import { TakeoverForm } from '@/components/TakeoverForm';
-import { StartOverlay } from '@/components/StartOverlay';
-import { useCurrentChannel, useCurrentPrice, useQuoteToken, useTakeoverEvents } from '@/hooks/useTelevision';
-
-type FarcasterContext = Awaited<typeof sdk.context>;
+import { useFarcasterContext } from '@/hooks/useFarcasterContext';
+import { useTelevision } from '@/hooks/useTelevision';
+import { env } from '@/utils/env';
 
 export default function Home() {
-  const { address, isConnected } = useAccount();
-  const [mounted, setMounted] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const { connectors, connect } = useConnect();
-  const [farcasterUser, setFarcasterUser] = useState<FarcasterContext['user'] | null>(null);
-  const [locationContext, setLocationContext] = useState<FarcasterContext['location'] | null>(null);
-  const { owner, uri, isLoading: isChannelLoading, refetch: refetchChannel } = useCurrentChannel();
-  const { price, isLoading: isPriceLoading } = useCurrentPrice();
-  const quoteToken = useQuoteToken();
+  const [isPoweredOn, setIsPoweredOn] = useState(false);
+  const { address } = useAccount();
+  const { user, isLoading: isUserLoading } = useFarcasterContext();
+  const {
+    slot0,
+    currentPrice,
+    isLoading: isChannelLoading,
+    userBalance,
+    userAllowance,
+    takeover,
+    approve,
+    isTakeoverPending,
+    isApprovePending,
+  } = useTelevision();
 
-  // Listen for takeover events
-  useTakeoverEvents((channelOwner, paymentAmount) => {
-    console.log('Takeover detected:', { channelOwner, paymentAmount });
-    refetchChannel();
-  });
+  const handlePowerOn = async () => {
+    setIsPoweredOn(true);
 
-  // Set mounted state on client
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+    // Call SDK ready() to hide splash screen
+    try {
+      await sdk.actions.ready();
+    } catch (error) {
+      console.error('Failed to call sdk.actions.ready():', error);
+    }
+  };
 
-  // Initialize SDK and auto-connect to Farcaster wallet
-  useEffect(() => {
-    if (!mounted) return;
+  const handlePowerOff = () => {
+    setIsPoweredOn(false);
+  };
 
-    const init = async () => {
-      try {
-        // Get SDK context - contains Farcaster user info (it's a Promise)
-        const context = await sdk.context;
-        console.log('📱 Farcaster context loaded:', {
-          user: context.user,
-          client: context.client,
-          location: context.location,
-          features: context.features,
-        });
+  const handleTakeover = async (url: string) => {
+    await takeover(url);
+  };
 
-        // Store Farcaster user info and location context for display
-        setFarcasterUser(context.user);
-        setLocationContext(context.location);
+  const handleApprove = async (amount: bigint) => {
+    await approve(amount);
+  };
 
-        // Log location context for debugging
-        if (context.location) {
-          console.log('📍 Launch context:', context.location.type);
-          if (context.location.type === 'cast_embed' || context.location.type === 'cast_share') {
-            console.log('📰 Cast context:', context.location.cast);
-          }
-        }
-
-        // Auto-connect to Farcaster wallet using the farcasterMiniApp connector
-        // Note: connect() returns void in wagmi v2, connection status tracked via useAccount
-        // CRITICAL: The connector ID is 'farcaster' NOT 'farcasterMiniApp'
-        if (!isConnected) {
-          try {
-            const farcasterConnector = connectors.find(
-              (connector) => connector.id === 'farcaster'
-            );
-
-            if (farcasterConnector) {
-              console.log('🔌 Connecting to Farcaster wallet...', { connectorId: farcasterConnector.id });
-              await connect({ connector: farcasterConnector });
-              console.log('✅ Connected to Farcaster wallet');
-            } else {
-              console.error('❌ Farcaster connector not found. Available connectors:',
-                connectors.map(c => ({ id: c.id, name: c.name }))
-              );
-            }
-          } catch (error) {
-            console.error('❌ Failed to connect to Farcaster wallet:', error);
-          }
-        }
-
-        // CRITICAL: Call ready() to hide splash screen
-        // This must be called or users will see infinite loading screen
-        await sdk.actions.ready();
-        console.log('✅ SDK ready() called - splash screen hidden');
-      } catch (error) {
-        console.error('❌ Initialization error:', error);
-        // IMPORTANT: Still call ready() even on error to prevent infinite splash
-        try {
-          await sdk.actions.ready();
-          console.log('✅ SDK ready() called after error');
-        } catch (e) {
-          console.error('❌ Failed to call ready:', e);
-        }
-      }
-    };
-
-    init();
-  }, [mounted, isConnected, connectors, connect]);
-
-  // Show start overlay until user clicks
-  if (!hasStarted) {
-    return <StartOverlay onStart={() => setHasStarted(true)} />;
+  // Show loading state
+  if (isUserLoading || isChannelLoading) {
+    return (
+      <div className="bg-black text-white flex items-center justify-center min-h-screen">
+        <p className="text-2xl">Loading...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col app-fade-in overflow-hidden">
-      {/* Header - Enhanced TV Style */}
-      <header className="relative bg-black px-3 py-2 border-b border-gray-800 flex-shrink-0">
-        <div className="absolute inset-0 scanlines opacity-10 pointer-events-none" />
-        <div className="max-w-6xl mx-auto flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
-            {/* Broadcast indicator */}
-            <div className="flex flex-col items-center gap-0.5">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" />
-              <div className="text-red-500 text-[8px] font-bold uppercase tracking-wider">Live</div>
-            </div>
-
-            {/* Logo */}
-            <h1 className="text-white text-lg md:text-xl font-bold tracking-wider uppercase leading-none">
-              TAKEOVER<span className="text-red-500">TV</span>
-            </h1>
+    <div className="bg-black text-white flex items-center justify-center min-h-screen p-2">
+      <div className="w-full max-w-md mx-auto h-auto aspect-[9/19.5] max-h-[95vh] flex flex-col">
+        {/* Power On Screen */}
+        {!isPoweredOn ? (
+          <div className="flex flex-col items-center justify-around h-full tv-border p-4 text-center">
+            <StartOverlay onStart={handlePowerOn} />
           </div>
+        ) : (
+          /* Main App Screen */
+          <div className="flex flex-col h-full space-y-3 py-3 tv-border">
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 flex-shrink-0">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePowerOff}
+                  className="p-1 text-retro-pink hover:opacity-80 transition-opacity"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-7 w-7"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"
+                    />
+                  </svg>
+                </button>
+                <h1 className="text-xl tracking-wider">TAKEOVER TV</h1>
+              </div>
 
-          {/* User Profile */}
-          {!mounted ? (
-            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
-              <div className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-pulse" />
-              <div className="text-gray-400 text-xs">Connecting...</div>
-            </div>
-          ) : farcasterUser ? (
-            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
-              {farcasterUser.pfpUrl && (
+              {/* User Profile */}
+              <div className="flex items-center space-x-2 text-sm">
                 <img
-                  src={farcasterUser.pfpUrl}
-                  alt={farcasterUser.displayName || farcasterUser.username || 'User'}
-                  className="w-6 h-6 rounded-full border border-gray-600"
+                  src={user?.pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${address}`}
+                  alt="User"
+                  className="w-9 h-9 rounded-full border-2 border-gray-700 bg-gray-800"
                 />
-              )}
-              <div className="flex flex-col items-start">
-                <div className="text-white text-xs font-semibold leading-tight">
-                  {farcasterUser.displayName || farcasterUser.username || 'Anonymous'}
+                <div className="text-left">
+                  <p className="font-bold">{user?.displayName || 'Guest'}</p>
+                  {user?.username && <p className="text-gray-400">@{user.username}</p>}
                 </div>
-                {farcasterUser.username && (
-                  <div className="text-gray-500 text-[10px] leading-tight">
-                    @{farcasterUser.username}
-                  </div>
-                )}
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
-              <div className="w-1.5 h-1.5 bg-gray-600 rounded-full animate-pulse" />
-              <div className="text-gray-400 text-xs">Connecting...</div>
+
+            {/* TV Screen (16:9 aspect ratio) */}
+            <div className="aspect-video relative overflow-hidden flex-shrink-0">
+              <VideoPlayer
+                url={slot0?.uri || `https://twitch.tv/${env.defaultChannel}`}
+                isActive={isPoweredOn}
+              />
             </div>
-          )}
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-h-0">
-        {/* Video Player - Full Width with frame effect */}
-        <div className="w-full bg-black relative flex-shrink-0">
-          <div className="absolute inset-0 pointer-events-none border-2 border-gray-900 z-10" />
-          <VideoPlayer uri={uri} isLoading={isChannelLoading} />
-        </div>
+            {/* Channel Info */}
+            {slot0 && (
+              <ChannelInfo
+                ownerAddress={slot0.owner}
+                ownerDisplayName={user?.displayName}
+                ownerUsername={user?.username}
+                ownerPfpUrl={user?.pfpUrl}
+                currentPrice={currentPrice}
+              />
+            )}
 
-        {/* Content Area */}
-        <div className="flex-1 bg-black overflow-y-auto min-h-0">
-          {/* Channel Information */}
-          <ChannelInfo owner={owner} price={price} quoteTokenDecimals={6} />
-        </div>
-
-        {/* Takeover Form */}
-        <TakeoverForm
-          currentPrice={price}
-          quoteToken={quoteToken}
-          onSuccess={refetchChannel}
-        />
-
-        {/* Footer */}
-        <footer className="relative bg-black px-3 py-2 border-t border-gray-800 flex-shrink-0">
-          <div className="absolute inset-0 scanlines opacity-5 pointer-events-none" />
-          <div className="max-w-6xl mx-auto text-center relative z-10">
-            <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">
-              Community Controlled Television
-            </p>
-            <p className="text-gray-600 text-[9px] mt-0.5">
-              Price doubles on takeover then drops to $0 over 1 hour
-            </p>
+            {/* Takeover Form */}
+            <TakeoverForm
+              currentPrice={currentPrice}
+              userBalance={userBalance}
+              userAllowance={userAllowance}
+              onTakeover={handleTakeover}
+              onApprove={handleApprove}
+              isPending={isTakeoverPending}
+              isApprovePending={isApprovePending}
+            />
           </div>
-        </footer>
-      </main>
+        )}
+      </div>
     </div>
   );
 }

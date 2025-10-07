@@ -1,55 +1,31 @@
 /**
- * Extract YouTube video ID from various URL formats
+ * Extracts YouTube video ID from various URL formats
+ * Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
  */
-export function extractYouTubeId(url: string): string | null {
-  try {
-    const urlObj = new URL(url);
+export function getYoutubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+  ];
 
-    // Handle youtu.be short links
-    if (urlObj.hostname === 'youtu.be') {
-      return urlObj.pathname.slice(1);
-    }
-
-    // Handle youtube.com links
-    if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
-      // Check for /watch?v= format
-      const videoId = urlObj.searchParams.get('v');
-      if (videoId) return videoId;
-
-      // Check for /embed/ format
-      if (urlObj.pathname.startsWith('/embed/')) {
-        return urlObj.pathname.split('/')[2];
-      }
-    }
-
-    return null;
-  } catch {
-    return null;
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
   }
+
+  return null;
 }
 
 /**
- * Validate if a YouTube URL is embeddable
- * Note: This is a client-side check. The video might still be restricted.
+ * Validates if a string is a valid YouTube URL
  */
-export function isValidYouTubeUrl(url: string): boolean {
-  const videoId = extractYouTubeId(url);
-  return videoId !== null && videoId.length === 11;
+export function isValidYoutubeUrl(url: string): boolean {
+  return getYoutubeVideoId(url) !== null;
 }
 
 /**
- * Get YouTube embed URL from video ID
+ * Constructs a YouTube embed URL
  */
-export function getYouTubeEmbedUrl(videoId: string, muted: boolean = false): string {
-  console.log('Creating embed URL for video:', videoId, 'muted:', muted);
-  // Autoplay with sound - user interaction from power button allows this
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=1&rel=0&enablejsapi=1&loop=1&playlist=${videoId}&playsinline=1&modestbranding=1`;
-}
-
-/**
- * Check if a URI is a valid YouTube URL
- */
-export function isYouTubeUri(uri: string): boolean {
-  if (!uri || uri.trim() === '') return false;
-  return isValidYouTubeUrl(uri);
+export function buildYoutubeEmbedUrl(videoId: string): string {
+  return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
 }

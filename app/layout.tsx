@@ -1,32 +1,10 @@
 import type { Metadata } from 'next';
-import './globals.css';
 import { Providers } from '@/components/Providers';
-import { env } from '@/utils/env';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'TakeoverTV - Decentralized Community Television',
-  description: 'A single, shared screen for the Farcaster community. Take control by paying a continuously decaying price.',
-  openGraph: {
-    title: 'TakeoverTV',
-    description: 'Take control of the channel',
-    images: ['/og-image.png'],
-  },
-  other: {
-    'fc:miniapp': JSON.stringify({
-      version: '1',
-      imageUrl: `https://${env.appDomain}/og-image.png`,
-      button: {
-        title: '📺 Watch Now',
-        action: {
-          type: 'launch_miniapp',
-          name: env.appName,
-          url: `https://${env.appDomain}`,
-          splashImageUrl: `https://${env.appDomain}/logo.png`,
-          splashBackgroundColor: '#000000',
-        },
-      },
-    }),
-  },
+  title: 'Takeover TV',
+  description: 'Community Controlled Television - Take control and broadcast your stream',
 };
 
 export default function RootLayout({
@@ -36,7 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <head>
+        <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://placehold.co/600x400/000000/FF00FF?text=Takeover+TV","button":{"title":"Watch & Takeover","action":{"type":"launch_miniapp","name":"Takeover TV","splashImageUrl":"https://placehold.co/200x200/000000/FF00FF?text=TV","splashBackgroundColor":"#000000"}}}' />
+        <meta name="fc:frame" content='{"version":"1","imageUrl":"https://placehold.co/600x400/000000/FF00FF?text=Takeover+TV","button":{"title":"Watch & Takeover","action":{"type":"launch_frame","name":"Takeover TV","splashImageUrl":"https://placehold.co/200x200/000000/FF00FF?text=TV","splashBackgroundColor":"#000000"}}}' />
+      </head>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

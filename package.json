@@ -6,31 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "check": "node scripts/check-setup.js",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:setup": "node scripts/check-setup.js",
+    "check:contract": "node scripts/check-contract.mjs"
   },
   "dependencies": {
     "@farcaster/miniapp-sdk": "^0.1.10",
     "@farcaster/miniapp-wagmi-connector": "^1.0.0",
-    "@tailwindcss/postcss": "^4.1.14",
-    "@tanstack/react-query": "^5.90.2",
-    "@wagmi/connectors": "^5.1.11",
-    "@wagmi/core": "^2.14.1",
-    "autoprefixer": "^10.4.21",
-    "next": "15.0.0",
-    "postcss": "^8.5.6",
+    "@tanstack/react-query": "^5.62.2",
+    "next": "15.0.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwindcss": "^4.1.14",
-    "viem": "^2.21.55",
-    "wagmi": "^2.12.17"
+    "viem": "^2.21.45",
+    "wagmi": "^2.12.29"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "15.0.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
 }

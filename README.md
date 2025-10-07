@@ -1,105 +1,24 @@
-# TakeoverTV - Farcaster Mini App
+# Takeover TV
 
-A decentralized, single-channel television network built as a Farcaster Mini App. Anyone can "takeover" the channel by paying a continuously decaying price.
+A community-controlled television built as a Farcaster Mini App. Users can "take over" the shared screen and broadcast their Twitch stream by paying the current takeover price. The price doubles after each takeover and decays back to zero over one hour, creating an engaging economic game.
 
 ## Features
 
-- 📺 **Single Shared Channel**: One video player for the entire Farcaster community
-- 💰 **Dutch Auction Mechanics**: Price continuously decays from 2x the last takeover price to zero over 24 hours
-- 🔄 **TV Static Transitions**: Nostalgic channel-switching effect with visual and audio feedback
-- 🎬 **YouTube Integration**: Share any public YouTube video with the community
-- ⛓️ **On-Chain Governance**: All takeovers are recorded on-chain via smart contract
-- 📱 **Mobile-First Design**: Optimized for mobile Farcaster clients
+- **Twitch Stream Integration** - Seamlessly embeds live Twitch streams
+- **Dynamic Pricing** - Doubling-and-decay pricing algorithm
+- **Smart Contract Integration** - On-chain ownership and price management via Base Sepolia
+- **Farcaster Mini App** - Runs inside Farcaster clients like Warpcast
+- **Retro/Cyberpunk UI** - CRT-style interface with scanlines and glitch effects
+- **Wallet Integration** - Automatic wallet connection via Farcaster connector
 
-## Tech Stack
+## Technology Stack
 
-- **Framework**: Next.js 15 with App Router
-- **Styling**: Tailwind CSS
-- **Blockchain**: Viem + Wagmi for Ethereum interactions
-- **Farcaster**: Mini App SDK for seamless integration
-- **Smart Contract**: Television.sol (Dutch auction mechanics)
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 22.11.0 or higher
-- A deployed Television smart contract
-- Farcaster account for testing
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <your-repo-url>
-cd takeover-tv-minapp
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create environment variables:
-```bash
-cp .env.local.example .env.local
-```
-
-4. Configure your `.env.local`:
-```env
-# Your deployed Television contract address
-NEXT_PUBLIC_TELEVISION_ADDRESS=0x...
-
-# Blockchain configuration (Base = 8453, Base Sepolia = 84532)
-NEXT_PUBLIC_CHAIN_ID=8453
-NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
-
-# Your domain (use localhost:3000 for local dev)
-NEXT_PUBLIC_APP_DOMAIN=localhost:3000
-NEXT_PUBLIC_APP_NAME=TakeoverTV
-```
-
-5. Run the development server:
-```bash
-npm run dev
-```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Setting Up Farcaster Mini App
-
-### 1. Enable Developer Mode
-
-1. Visit [https://farcaster.xyz/~/settings/developer-tools](https://farcaster.xyz/~/settings/developer-tools)
-2. Toggle on "Developer Mode"
-
-### 2. Preview Your App
-
-1. Use ngrok or similar to expose your local server:
-```bash
-ngrok http 3000
-```
-
-2. Visit the [Mini App Preview Tool](https://farcaster.xyz/~/developers/mini-apps/preview)
-3. Enter your ngrok URL to test
-
-### 3. Sign Your Manifest
-
-Before publishing, you need to sign your manifest:
-
-1. Deploy your app to your production domain
-2. Visit [https://farcaster.xyz/~/developers/mini-apps/manifest](https://farcaster.xyz/~/developers/mini-apps/manifest)
-3. Enter your domain and sign the manifest
-4. Copy the `accountAssociation` object
-5. Update `app/api/manifest/route.ts` with the signed values
-
-### 4. Create Images
-
-Create the following images in your `public/` directory:
-
-- `logo.png` (200x200px) - App icon for splash screen
-- `og-image.png` (1200x630px) - Social sharing image (3:2 ratio)
-- `screenshot1.png` - App screenshot for app store
+- **Frontend**: Next.js 15, React 19, TypeScript
+- **Styling**: Tailwind CSS with custom retro styling
+- **Web3**: Wagmi, Viem
+- **Blockchain**: Base Sepolia
+- **Platform**: Farcaster Mini App SDK
+- **Tokens**: USDC for payments
 
 ## Project Structure
 
@@ -108,118 +27,238 @@ takeover-tv-minapp/
 ├── app/
 │   ├── api/
 │   │   └── manifest/
-│   │       └── route.ts        # Farcaster manifest endpoint
-│   ├── layout.tsx              # Root layout with providers
-│   ├── page.tsx                # Main app page
-│   └── globals.css             # Global styles with TV static effect
+│   │       └── route.ts          # Farcaster manifest API
+│   ├── globals.css               # Global styles with retro effects
+│   ├── layout.tsx                # Root layout with providers
+│   └── page.tsx                  # Main application page
 ├── components/
-│   ├── VideoPlayer.tsx         # YouTube player with static transitions
-│   ├── ChannelInfo.tsx         # Current owner and price display
-│   ├── TakeoverForm.tsx        # URL input and transaction handling
-│   └── Providers.tsx           # Wagmi and React Query providers
+│   ├── ChannelInfo.tsx           # TV owner and price display
+│   ├── Providers.tsx             # Wagmi and React Query providers
+│   ├── StartOverlay.tsx          # Power-on screen
+│   ├── TakeoverForm.tsx          # URL input and takeover button
+│   └── VideoPlayer.tsx           # Twitch embed player
 ├── contracts/
-│   └── television-abi.ts       # Smart contract ABIs
+│   ├── television-abi.ts         # Television contract ABI
+│   └── usdc-abi.ts               # USDC contract ABI
 ├── hooks/
-│   └── useTelevision.ts        # Custom hooks for contract interactions
+│   ├── useFarcasterContext.ts    # Hook for Farcaster user data
+│   └── useTelevision.ts          # Hook for contract interactions
 ├── lib/
-│   └── wagmi.ts                # Wagmi configuration
-└── utils/
-    ├── env.ts                  # Environment configuration
-    └── youtube.ts              # YouTube URL validation utilities
+│   └── wagmi.ts                  # Wagmi configuration
+├── public/
+│   ├── .well-known/
+│   │   └── farcaster.json        # Farcaster manifest
+│   ├── logo.svg                  # App logo
+│   └── og-image.svg              # Open Graph image
+├── scripts/
+│   ├── check-contract.mjs        # Contract verification script
+│   └── check-setup.js            # Project setup validation
+├── utils/
+│   ├── env.ts                    # Environment configuration
+│   ├── farcaster.ts              # Farcaster utilities
+│   ├── twitch.ts                 # Twitch URL parsing
+│   └── youtube.ts                # YouTube utilities (future)
+├── .env.local                    # Environment variables
+└── package.json
 ```
 
-## Key Components
+## Smart Contracts
 
-### VideoPlayer
+### Television Contract
+**Address**: `0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215`
 
-- Displays YouTube videos in a 16:9 player
-- Shows TV static transition effect when channel changes
-- Displays "STANDBY" mode for invalid URIs
-- Auto-plays videos when they load
+Main contract that manages channel ownership and takeover pricing.
 
-### ChannelInfo
+**Key Functions**:
+- `currentChannel()` - Returns current owner, price, timestamp, and URI
+- `getCurrentPrice()` - Returns current takeover price
+- `takeover(string uri)` - Execute a takeover with new channel URI
 
-- Shows current channel owner address (shortened)
-- Displays real-time decaying price
-- Visual indicator that price is continuously decaying
+### USDC Contract
+**Address**: `0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7`
 
-### TakeoverForm
+Standard ERC-20 token used for payments on Base Sepolia.
 
-- YouTube URL validation with visual feedback
-- Two-step transaction process:
-  1. Approve USDC (if needed)
-  2. Execute takeover
-- Success/error feedback to user
+## Setup Instructions
 
-## Smart Contract Integration
+### Prerequisites
 
-The app interacts with the Television.sol contract with these key functions:
+- Node.js 22.11.0 or higher
+- npm or yarn
+- Git
 
-- `getSlot0()`: Returns current owner and URI
-- `getPrice()`: Returns current decaying price
-- `takeover(string uri)`: Execute a takeover with new URI
-- `Takeover` event: Emitted when channel changes hands
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd takeover-tv-minapp
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+   Edit `.env.local` with your configuration:
+   ```env
+   NEXT_PUBLIC_CHAIN_ID=84532
+   NEXT_PUBLIC_TELEVISION_CONTRACT=0x46Fcd75Dd8cB75e678D078353e8C3fd32671f215
+   NEXT_PUBLIC_USDC_CONTRACT=0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_DEFAULT_CHANNEL=gamesdonequick
+   ```
+
+4. **Verify setup**
+   ```bash
+   npm run check:setup
+   ```
+
+5. **Verify contract access**
+   ```bash
+   npm run check:contract
+   ```
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Deployment
+
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Configure environment variables in Vercel dashboard
+4. Deploy
+
+**Important**: Update `NEXT_PUBLIC_APP_URL` to your production domain.
+
+### Farcaster Manifest
+
+After deployment, update the Farcaster manifest:
+
+1. Update `public/.well-known/farcaster.json` with your production URL
+2. Generate account association signature (if needed)
+3. Test manifest at: `https://your-domain.com/.well-known/farcaster.json`
+
+## How It Works
+
+### Economic Model
+
+1. **Initial State**: TV starts with a default channel and price
+2. **Takeover**: User enters a Twitch URL and pays the current price
+3. **Price Update**: Price doubles and decay timer resets
+4. **Decay**: Price linearly decreases to $0 over 1 hour
+5. **Repeat**: Next user can takeover when ready
+
+### Smart Contract Flow
+
+1. User approves USDC spending (if needed)
+2. User calls `takeover()` with their Twitch URL
+3. Contract transfers USDC from user
+4. Contract updates channel owner and URI
+5. Contract doubles the `initPrice`
+6. UI reflects new owner and begins price decay
+
+### Farcaster Integration
+
+- **Context**: Uses `@farcaster/miniapp-sdk` to get user info
+- **Wallet**: Automatic connection via `farcasterConnector`
+- **Launch**: Opens from casts, profiles, or direct links
+- **Auth**: No separate auth needed - wallet is identity
+
+### Twitch Embedding
+
+The app properly handles Twitch's parent domain requirements for Farcaster clients:
+- `client.warpcast.com`
+- `supercast.xyz`
+- `embeds.lfg.castle.fyi`
+
+## Troubleshooting
+
+### "Contract not found" error
+- Verify you're on Base Sepolia (chainId: 84532)
+- Check contract addresses in `.env.local`
+- Run `npm run check:contract`
+
+### Twitch player not loading
+- Verify the Twitch URL format: `https://twitch.tv/channelname`
+- Check browser console for parent domain errors
+- Ensure you're accessing via proper domain (not localhost in production)
+
+### Transaction failures
+- Check you have USDC balance on Base Sepolia
+- Verify you've approved sufficient USDC allowance
+- Confirm wallet is connected
+
+### Mini App not loading in Warpcast
+- Verify manifest is accessible: `https://your-domain.com/.well-known/farcaster.json`
+- Check `fc:miniapp` meta tag in HTML
+- Ensure `sdk.actions.ready()` is called after app loads
 
 ## Development Tips
 
 ### Testing Locally
 
-1. Use ngrok to expose your local dev server
-2. Test in the Farcaster Mini App Preview Tool
-3. Note: `addMiniApp()` only works on production domains
+1. Use a tunnel service (ngrok, localtunnel) to test in Farcaster
+2. Add tunnel domain to Twitch parent domains in `utils/twitch.ts`
+3. Test with Base Sepolia testnet USDC
 
-### Wallet Integration
+### Getting Testnet USDC
 
-The app auto-connects to the Farcaster wallet using the `@farcaster/miniapp-wagmi-connector`.
+1. Bridge ETH to Base Sepolia
+2. Use a Base Sepolia faucet for test USDC
+3. Or ask in the project's community channels
 
-### Price Decay
+### Customization
 
-Prices are fetched every 5 seconds to show live decay. Adjust the interval in `hooks/useTelevision.ts` if needed.
+- **Styling**: Edit `app/globals.css` for retro effects
+- **Default Channel**: Change `NEXT_PUBLIC_DEFAULT_CHANNEL`
+- **Pricing Algorithm**: Modify `EPOCH_PERIOD` in `hooks/useTelevision.ts`
+- **UI Components**: Customize components in `components/`
 
-## Deployment
+## Contributing
 
-### Deploy to Vercel
+Contributions are welcome! Please:
 
-1. Push your code to GitHub
-2. Import project to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-### Post-Deployment
-
-1. Update `NEXT_PUBLIC_APP_DOMAIN` to your production domain
-2. Sign your manifest using the Farcaster manifest tool
-3. Upload required images (logo, og-image, screenshots)
-4. Test the app using the preview tool
-5. Share in Farcaster!
-
-## Troubleshooting
-
-### "Invalid domain manifest" error
-
-Make sure your manifest is properly signed and accessible at `https://yourdomain.com/.well-known/farcaster.json`
-
-### Transactions failing
-
-1. Check that you have enough USDC in your wallet
-2. Verify the Television contract address is correct
-3. Ensure you're on the correct network (Base/Base Sepolia)
-
-### Video not loading
-
-1. Verify the YouTube URL is valid and embeddable
-2. Check that the video is public and allows embedding
-3. Test the URL manually on youtube.com
-
-## Resources
-
-- [Farcaster Mini Apps Docs](https://miniapps.farcaster.xyz)
-- [Wagmi Documentation](https://wagmi.sh)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Viem Documentation](https://viem.sh)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## License
 
-MIT
-# takeover-tv-miniapp
-# Force rebuild
+[Add your license here]
+
+## Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Contact via Farcaster: [Add your handle]
+
+## Acknowledgments
+
+- Built for the Farcaster ecosystem
+- Uses the Farcaster Mini App SDK
+- Powered by Base Sepolia
+- Twitch integration for live streaming
