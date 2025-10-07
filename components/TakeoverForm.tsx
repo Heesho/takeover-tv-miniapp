@@ -136,9 +136,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        {needsApproval
-          ? 'First approve USDC spending, then takeover the TV.'
-          : 'Takeover the TV to broadcast your video. Price doubles on takeover then drops to $0 over 1 hour.'}
+        Takeover the TV to broadcast your video. Price doubles on takeover then drops to $0 over 1 hour.
       </p>
 
       {/* Message Overlay */}
