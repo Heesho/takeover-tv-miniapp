@@ -121,7 +121,13 @@ export function TakeoverForm({
 
       {/* Action Button */}
       <button
-        onClick={getButtonAction()}
+        onClick={() => {
+          if (needsApproval) {
+            handleApprove();
+          } else {
+            handleTakeover();
+          }
+        }}
         disabled={isButtonDisabled}
         className="w-full p-2.5 rounded-lg takeover-button font-bold transition-opacity disabled:opacity-50"
       >
