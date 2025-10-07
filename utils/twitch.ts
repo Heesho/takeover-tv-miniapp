@@ -23,6 +23,7 @@ export function buildTwitchPlayerUrl(channelName: string): string {
     'supercast.xyz',
     'embeds.lfg.castle.fyi',
     'farcaster.xyz', // Farcaster developer preview tool
+    'take0ver-tv.vercel.app', // Production domain
   ];
 
   // Get current hostname (works in browser only)
@@ -42,5 +43,5 @@ export function buildTwitchPlayerUrl(channelName: string): string {
 
   const parentParams = knownParents.map(p => `parent=${p}`).join('&');
 
-  return `https://player.twitch.tv/?channel=${channelName}&${parentParams}&autoplay=true&muted=true`;
+  return `https://player.twitch.tv/?channel=${channelName}&${parentParams}&autoplay=true&muted=false`;
 }

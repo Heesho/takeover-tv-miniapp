@@ -1,67 +1,143 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { buildTwitchPlayerUrl, getTwitchChannel } from '@/utils/twitch';
+import { getTwitchChannel } from '@/utils/twitch';
 
 interface VideoPlayerProps {
   url: string;
   isActive: boolean;
 }
 
+// Declare Twitch global type
+declare global {
+  interface Window {
+    Twitch?: {
+      Player: new (elementId: string, options: any) => TwitchPlayer;
+    };
+  }
+}
+
+interface TwitchPlayer {
+  setChannel(channel: string): void;
+  setMuted(muted: boolean): void;
+  play(): void;
+  pause(): void;
+  destroy(): void;
+  addEventListener(event: string, callback: () => void): void;
+}
+
 export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<TwitchPlayer | null>(null);
   const [hasError, setHasError] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+
+  // Extract channel name
+  const channelName = url ? getTwitchChannel(url) : null;
 
   useEffect(() => {
-    if (!isActive || !containerRef.current) return;
-
-    console.log('VideoPlayer received URL:', url);
-
-    // Check if URL is empty or not a valid Twitch URL
-    const channelName = url ? getTwitchChannel(url) : null;
-    console.log('Extracted channel name:', channelName);
-
-    if (!channelName) {
-      setHasError(true);
-      if (url) {
+    if (!isActive || !containerRef.current || !channelName) {
+      if (!channelName && url) {
         console.error('Invalid Twitch URL:', url);
+        setHasError(true);
       }
       return;
     }
 
+    console.log('VideoPlayer initializing for channel:', channelName);
     setHasError(false);
 
-    // Clear previous content
-    containerRef.current.innerHTML = '';
-
-    // Create iframe
-    const iframe = document.createElement('iframe');
-    const embedUrl = buildTwitchPlayerUrl(channelName);
-    console.log('Twitch embed URL:', embedUrl);
-    console.log('Current hostname:', window.location.hostname);
-
-    iframe.src = embedUrl;
-    iframe.width = '100%';
-    iframe.height = '100%';
-    iframe.allowFullscreen = true;
-    iframe.style.border = 'none';
-
-    // Add error handler
-    iframe.onerror = () => {
-      console.error('Iframe failed to load');
+    // Check if Twitch Player API is loaded
+    if (!window.Twitch?.Player) {
+      console.error('Twitch Player API not loaded');
       setHasError(true);
-    };
+      return;
+    }
 
-    containerRef.current.appendChild(iframe);
+    // Generate unique ID for this player instance
+    const playerId = `twitch-player-${Date.now()}`;
+
+    // Clear previous content and create player container
+    containerRef.current.innerHTML = '';
+    const playerDiv = document.createElement('div');
+    playerDiv.id = playerId;
+    playerDiv.style.width = '100%';
+    playerDiv.style.height = '100%';
+    containerRef.current.appendChild(playerDiv);
+
+    try {
+      // Get known parent domains
+      const knownParents = [
+        'client.warpcast.com',
+        'supercast.xyz',
+        'embeds.lfg.castle.fyi',
+        'farcaster.xyz',
+        'take0ver-tv.vercel.app',
+      ];
+
+      const currentHost = window.location.hostname;
+      if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+        if (!knownParents.includes('localhost')) {
+          knownParents.push('localhost');
+        }
+      } else if (currentHost && !knownParents.includes(currentHost)) {
+        knownParents.push(currentHost);
+      }
+
+      console.log('Creating Twitch Player with parents:', knownParents);
+
+      // Create the Twitch Player
+      const player = new window.Twitch.Player(playerId, {
+        width: '100%',
+        height: '100%',
+        channel: channelName,
+        parent: knownParents,
+        autoplay: true,
+        muted: false, // Start unmuted - this should work because player creation happens in response to user gesture chain
+        allowfullscreen: true,
+      });
+
+      // Listen for ready event
+      player.addEventListener('ready', () => {
+        console.log('Twitch Player ready');
+        setIsPlayerReady(true);
+
+        // Ensure unmuted playback (redundant but ensures it works)
+        player.setMuted(false);
+      });
+
+      playerRef.current = player;
+
+      console.log('Twitch Player created successfully');
+    } catch (error) {
+      console.error('Error creating Twitch Player:', error);
+      setHasError(true);
+    }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch (error) {
+          console.error('Error destroying player:', error);
+        }
+        playerRef.current = null;
       }
+      setIsPlayerReady(false);
     };
-  }, [url, isActive]);
+  }, [url, channelName, isActive]);
 
-  // Show TV static when not active, or when there's no valid URL
+  // Update channel when URL changes (for takeovers)
+  useEffect(() => {
+    if (isPlayerReady && playerRef.current && channelName) {
+      console.log('Updating channel to:', channelName);
+      playerRef.current.setChannel(channelName);
+      // Ensure it stays unmuted after channel change
+      playerRef.current.setMuted(false);
+    }
+  }, [channelName, isPlayerReady]);
+
+  // Show TV static when not active, or when there's an error
   if (!isActive || hasError) {
     return (
       <div className="w-full h-full bg-black relative">

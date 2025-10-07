@@ -17,6 +17,8 @@ export default function RootLayout({
       <head>
         <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://take0ver-tv.vercel.app/og-image.svg","button":{"title":"Watch & Take0ver","action":{"type":"launch_miniapp","name":"Take0ver TV","splashImageUrl":"https://take0ver-tv.vercel.app/icon.png","splashBackgroundColor":"#000000"}}}' />
         <meta name="fc:frame" content='{"version":"1","imageUrl":"https://take0ver-tv.vercel.app/og-image.svg","button":{"title":"Watch & Take0ver","action":{"type":"launch_frame","name":"Take0ver TV","splashImageUrl":"https://take0ver-tv.vercel.app/icon.png","splashBackgroundColor":"#000000"}}}' />
+        {/* Twitch Player API - loaded before user interaction */}
+        <script src="https://player.twitch.tv/js/embed/v1.js" async></script>
       </head>
       <body>
         <Providers>{children}</Providers>
