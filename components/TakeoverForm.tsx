@@ -102,7 +102,7 @@ export function TakeoverForm({
                 d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
               />
             </svg>
-            <label htmlFor="video-url">BROADCAST YOUR STREAM</label>
+            <label htmlFor="video-url">BROADCAST A STREAM</label>
           </div>
           <span className={`text-xs ${isValidUrl ? 'text-green-500' : url ? 'text-red-500' : ''}`}>
             {url && (isValidUrl ? '✓ Valid URL' : '✗ Invalid URL')}
@@ -136,7 +136,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Takeover the TV to broadcast your video. Price doubles on takeover then drops to $0 over 1 hour.
+        Takeover the TV to broadcast a stream. Price doubles on takeover then drops to $0 over 1 hour. 90% of the takeover price goes to the previous TV owner.
       </p>
 
       {/* Message Overlay */}
