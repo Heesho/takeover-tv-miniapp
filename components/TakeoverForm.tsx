@@ -39,7 +39,7 @@ export function TakeoverForm({
   useEffect(() => {
     if (isApproveSuccess) {
       setMessage('Approval successful! Click TAKE0VER to continue.');
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), 1500);
     }
   }, [isApproveSuccess]);
 
@@ -48,7 +48,7 @@ export function TakeoverForm({
     if (isTakeoverSuccess) {
       setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), 1500);
     }
   }, [isTakeoverSuccess]);
 
@@ -160,7 +160,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver price goes to the previous TV owner.
+        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver payment goes to the previous TV owner.
       </p>
 
       {/* Message Overlay */}
