@@ -27,15 +27,22 @@ export default function Home() {
     isApprovePending,
   } = useTelevision();
 
+  // Call sdk.actions.ready() as soon as the app finishes loading
+  useEffect(() => {
+    // Only call ready() after initial data loading is complete
+    if (!isUserLoading && !isChannelLoading) {
+      sdk.actions.ready()
+        .then(() => {
+          console.log('Mini App ready called successfully');
+        })
+        .catch((error) => {
+          console.error('Failed to call sdk.actions.ready():', error);
+        });
+    }
+  }, [isUserLoading, isChannelLoading]);
+
   const handlePowerOn = async () => {
     setIsPoweredOn(true);
-
-    // Call SDK ready() to hide splash screen
-    try {
-      await sdk.actions.ready();
-    } catch (error) {
-      console.error('Failed to call sdk.actions.ready():', error);
-    }
   };
 
   const handlePowerOff = () => {
