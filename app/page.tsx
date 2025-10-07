@@ -25,6 +25,8 @@ export default function Home() {
     approve,
     isTakeoverPending,
     isApprovePending,
+    isApproveSuccess,
+    isTakeoverSuccess,
   } = useTelevision();
 
   // Log channel changes for debugging
@@ -155,6 +157,8 @@ export default function Home() {
               onApprove={handleApprove}
               isPending={isTakeoverPending}
               isApprovePending={isApprovePending}
+              isApproveSuccess={isApproveSuccess}
+              isTakeoverSuccess={isTakeoverSuccess}
             />
           </div>
         )}

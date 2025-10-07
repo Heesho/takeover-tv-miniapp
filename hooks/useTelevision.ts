@@ -1,4 +1,5 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { useEffect } from 'react';
 import { televisionAbi } from '@/contracts/television-abi';
 import { usdcAbi } from '@/contracts/usdc-abi';
 import { env } from '@/utils/env';
@@ -30,6 +31,8 @@ interface UseTelevisionReturn {
   // Transaction states
   isTakeoverPending: boolean;
   isApprovePending: boolean;
+  isApproveSuccess: boolean;
+  isTakeoverSuccess: boolean;
   takeoverError: Error | null;
   approveError: Error | null;
 }
@@ -105,15 +108,19 @@ export function useTelevision(): UseTelevisionReturn {
   });
 
   // Refetch allowance after successful approval
-  if (isApproveSuccess) {
-    refetchAllowance();
-  }
+  useEffect(() => {
+    if (isApproveSuccess) {
+      refetchAllowance();
+    }
+  }, [isApproveSuccess, refetchAllowance]);
 
   // Refetch data after successful takeover
-  if (isTakeoverSuccess) {
-    refetchSlot0();
-    refetchPrice();
-  }
+  useEffect(() => {
+    if (isTakeoverSuccess) {
+      refetchSlot0();
+      refetchPrice();
+    }
+  }, [isTakeoverSuccess, refetchSlot0, refetchPrice]);
 
   // Actions
   const approve = async (amount: bigint) => {
@@ -168,6 +175,8 @@ export function useTelevision(): UseTelevisionReturn {
     approve,
     isTakeoverPending: isTakeoverPending || isTakeoverConfirming,
     isApprovePending: isApprovePending || isApproveConfirming,
+    isApproveSuccess,
+    isTakeoverSuccess,
     takeoverError: takeoverWriteError as Error | null,
     approveError: approveWriteError as Error | null,
   };

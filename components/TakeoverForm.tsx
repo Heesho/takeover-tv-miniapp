@@ -12,6 +12,8 @@ interface TakeoverFormProps {
   onApprove: (amount: bigint) => Promise<void>;
   isPending: boolean;
   isApprovePending: boolean;
+  isApproveSuccess: boolean;
+  isTakeoverSuccess: boolean;
 }
 
 export function TakeoverForm({
@@ -22,6 +24,8 @@ export function TakeoverForm({
   onApprove,
   isPending,
   isApprovePending,
+  isApproveSuccess,
+  isTakeoverSuccess,
 }: TakeoverFormProps) {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
@@ -30,6 +34,23 @@ export function TakeoverForm({
   useEffect(() => {
     setIsValidUrl(url ? isValidTwitchUrl(url) : false);
   }, [url]);
+
+  // Show success message when approval transaction confirms
+  useEffect(() => {
+    if (isApproveSuccess) {
+      setMessage('Approval successful! Click TAKEOVER to continue.');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  }, [isApproveSuccess]);
+
+  // Show success message when takeover transaction confirms
+  useEffect(() => {
+    if (isTakeoverSuccess) {
+      setMessage('TAKEOVER SUCCESSFUL!');
+      setUrl('');
+      setTimeout(() => setMessage(''), 3000);
+    }
+  }, [isTakeoverSuccess]);
 
   const needsApproval = userAllowance < currentPrice;
   const hasInsufficientBalance = currentPrice > userBalance;
@@ -40,8 +61,7 @@ export function TakeoverForm({
     try {
       setMessage('Approving USDC...');
       await onApprove(currentPrice);
-      setMessage('Approval successful! Click TAKEOVER to continue.');
-      setTimeout(() => setMessage(''), 3000);
+      // Don't show success here - wait for transaction to confirm
     } catch (error) {
       console.error('Approval failed:', error);
       setMessage('Approval failed. Please try again.');
@@ -55,9 +75,7 @@ export function TakeoverForm({
     try {
       setMessage('Executing Takeover...');
       await onTakeover(url);
-      setMessage('TAKEOVER SUCCESSFUL!');
-      setUrl('');
-      setTimeout(() => setMessage(''), 3000);
+      // Don't show success here - wait for transaction to confirm
     } catch (error) {
       console.error('Takeover failed:', error);
       setMessage('Takeover failed. Please try again.');
