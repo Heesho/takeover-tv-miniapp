@@ -136,8 +136,8 @@ export function useTelevision(): UseTelevisionReturn {
     ? {
         locked: Number(slot0Data.locked),
         epochId: Number(slot0Data.epochId),
-        initPrice: slot0Data.initPrice,
-        startTime: slot0Data.startTime,
+        initPrice: BigInt(slot0Data.initPrice),
+        startTime: BigInt(slot0Data.startTime),
         owner: slot0Data.owner,
         uri: slot0Data.uri,
       }
