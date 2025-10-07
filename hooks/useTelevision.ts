@@ -68,12 +68,15 @@ export function useTelevision(): UseTelevisionReturn {
     args: address ? [address] : undefined,
   });
 
-  // Read user's USDC allowance for the Television contract
-  const { data: userAllowance = 0n } = useReadContract({
+  // Read user's USDC allowance for the Television contract - poll every 2 seconds
+  const { data: userAllowance = 0n, refetch: refetchAllowance } = useReadContract({
     address: env.usdcContract,
     abi: usdcAbi,
     functionName: 'allowance',
     args: address ? [address, env.televisionContract] : undefined,
+    query: {
+      refetchInterval: 2000, // Poll every 2 seconds to detect approval changes
+    },
   });
 
   // Write contracts
@@ -92,7 +95,7 @@ export function useTelevision(): UseTelevisionReturn {
   } = useWriteContract();
 
   // Wait for approve transaction
-  const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({
+  const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
     hash: approveHash,
   });
 
@@ -100,6 +103,11 @@ export function useTelevision(): UseTelevisionReturn {
   const { isLoading: isTakeoverConfirming, isSuccess: isTakeoverSuccess } = useWaitForTransactionReceipt({
     hash: takeoverHash,
   });
+
+  // Refetch allowance after successful approval
+  if (isApproveSuccess) {
+    refetchAllowance();
+  }
 
   // Refetch data after successful takeover
   if (isTakeoverSuccess) {
