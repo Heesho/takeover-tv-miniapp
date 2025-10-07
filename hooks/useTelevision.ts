@@ -64,12 +64,27 @@ export function useTelevision(): UseTelevisionReturn {
   });
 
   // Read user's USDC balance
-  const { data: userBalance = 0n } = useReadContract({
+  const { data: userBalance = 0n, error: balanceError, isLoading: isBalanceLoading } = useReadContract({
     address: env.usdcContract,
     abi: usdcAbi,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
+    query: {
+      enabled: !!address, // Only run when address is available
+    },
   });
+
+  // Log balance errors for debugging
+  useEffect(() => {
+    if (balanceError) {
+      console.error('USDC balance read error:', balanceError);
+    }
+    if (address) {
+      console.log('User address:', address);
+      console.log('User USDC balance:', userBalance.toString());
+      console.log('Balance loading:', isBalanceLoading);
+    }
+  }, [balanceError, userBalance, address, isBalanceLoading]);
 
   // Read user's USDC allowance for the Television contract - poll every 2 seconds
   const { data: userAllowance = 0n, refetch: refetchAllowance } = useReadContract({

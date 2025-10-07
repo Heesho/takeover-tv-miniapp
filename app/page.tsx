@@ -141,9 +141,6 @@ export default function Home() {
             {slot0 && (
               <ChannelInfo
                 ownerAddress={slot0.owner}
-                ownerDisplayName={user?.displayName}
-                ownerUsername={user?.username}
-                ownerPfpUrl={user?.pfpUrl}
                 currentPrice={currentPrice}
               />
             )}
