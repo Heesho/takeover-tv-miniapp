@@ -17,8 +17,8 @@ export function Providers({ children }: ProvidersProps) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Log if ethereum is already defined (for debugging)
-      if (window.ethereum) {
-        console.log('window.ethereum already defined:', window.ethereum);
+      if ((window as any).ethereum) {
+        console.log('window.ethereum already defined:', (window as any).ethereum);
       }
     }
   }, []);
