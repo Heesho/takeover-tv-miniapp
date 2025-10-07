@@ -156,12 +156,6 @@ export function useTelevision(): UseTelevisionReturn {
     if (!address) throw new Error('Wallet not connected');
     if (!slot0Data) throw new Error('Channel data not loaded');
 
-    // Prevent multiple simultaneous transactions
-    if (isTakeoverPending) {
-      console.log('Takeover already in progress, skipping...');
-      return;
-    }
-
     // Calculate deadline: 10 minutes from now
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
 
@@ -192,7 +186,6 @@ export function useTelevision(): UseTelevisionReturn {
       abi: televisionAbi,
       functionName: 'takeover',
       args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
-      gas: 500000n, // Set explicit gas limit to prevent estimation issues
     });
   };
 
