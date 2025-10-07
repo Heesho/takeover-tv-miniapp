@@ -15,11 +15,14 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
   useEffect(() => {
     if (!isActive || !containerRef.current) return;
 
-    const channelName = getTwitchChannel(url);
+    // Check if URL is empty or not a valid Twitch URL
+    const channelName = url ? getTwitchChannel(url) : null;
 
     if (!channelName) {
       setHasError(true);
-      console.error('Invalid Twitch URL:', url);
+      if (url) {
+        console.error('Invalid Twitch URL:', url);
+      }
       return;
     }
 
@@ -45,19 +48,12 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
     };
   }, [url, isActive]);
 
-  if (!isActive) {
+  // Show TV static when not active, or when there's no valid URL
+  if (!isActive || hasError) {
     return (
       <div className="w-full h-full bg-black relative">
         <div className="scanline"></div>
         <div className="tv-static"></div>
-      </div>
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div className="w-full h-full bg-black flex items-center justify-center p-4">
-        <p className="text-center text-red-500">Invalid Twitch URL provided.</p>
       </div>
     );
   }
