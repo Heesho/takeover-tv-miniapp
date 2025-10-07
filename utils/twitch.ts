@@ -22,6 +22,7 @@ export function buildTwitchPlayerUrl(channelName: string): string {
     'client.warpcast.com',
     'supercast.xyz',
     'embeds.lfg.castle.fyi',
+    'farcaster.xyz', // Farcaster developer preview tool
   ];
 
   // Get current hostname (works in browser only)
