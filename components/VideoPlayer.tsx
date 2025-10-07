@@ -33,7 +33,11 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
 
     // Create iframe
     const iframe = document.createElement('iframe');
-    iframe.src = buildTwitchPlayerUrl(channelName);
+    const embedUrl = buildTwitchPlayerUrl(channelName);
+    console.log('Twitch embed URL:', embedUrl);
+    console.log('Current hostname:', window.location.hostname);
+
+    iframe.src = embedUrl;
     iframe.width = '100%';
     iframe.height = '100%';
     iframe.allowFullscreen = true;
