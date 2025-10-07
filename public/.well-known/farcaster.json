@@ -7,9 +7,9 @@
   "miniapp": {
     "version": "1",
     "name": "Takeover TV",
-    "iconUrl": "https://your-domain.com/logo.svg",
-    "homeUrl": "https://your-domain.com",
-    "splashImageUrl": "https://your-domain.com/logo.svg",
+    "iconUrl": "https://takeover-tv-miniapp.vercel.app/icon.png",
+    "homeUrl": "https://takeover-tv-miniapp.vercel.app",
+    "splashImageUrl": "https://takeover-tv-miniapp.vercel.app/icon.png",
     "splashBackgroundColor": "#000000"
   }
 }

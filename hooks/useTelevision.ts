@@ -126,12 +126,17 @@ export function useTelevision(): UseTelevisionReturn {
   const approve = async (amount: bigint) => {
     if (!address) throw new Error('Wallet not connected');
 
-    writeApprove({
-      address: env.usdcContract,
-      abi: usdcAbi,
-      functionName: 'approve',
-      args: [env.televisionContract, amount],
-    });
+    try {
+      writeApprove({
+        address: env.usdcContract,
+        abi: usdcAbi,
+        functionName: 'approve',
+        args: [env.televisionContract, amount],
+      });
+    } catch (error) {
+      console.error('Approve transaction failed:', error);
+      throw error;
+    }
   };
 
   const takeover = async (uri: string) => {
