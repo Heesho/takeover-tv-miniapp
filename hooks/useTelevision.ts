@@ -40,18 +40,24 @@ interface UseTelevisionReturn {
 export function useTelevision(): UseTelevisionReturn {
   const { address } = useAccount();
 
-  // Read current slot0 (channel data)
+  // Read current slot0 (channel data) - poll every 2 seconds
   const { data: slot0Data, isLoading: isSlot0Loading, error: slot0Error, refetch: refetchSlot0 } = useReadContract({
     address: env.televisionContract,
     abi: televisionAbi,
     functionName: 'getSlot0',
+    query: {
+      refetchInterval: 2000, // Poll every 2 seconds
+    },
   });
 
-  // Read current price from contract
+  // Read current price from contract - poll every 1 second for live price updates
   const { data: currentPrice = 0n, refetch: refetchPrice } = useReadContract({
     address: env.televisionContract,
     abi: televisionAbi,
     functionName: 'getPrice',
+    query: {
+      refetchInterval: 1000, // Poll every 1 second for price decay
+    },
   });
 
   // Read user's USDC balance

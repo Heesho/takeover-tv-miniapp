@@ -15,8 +15,11 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
   useEffect(() => {
     if (!isActive || !containerRef.current) return;
 
+    console.log('VideoPlayer received URL:', url);
+
     // Check if URL is empty or not a valid Twitch URL
     const channelName = url ? getTwitchChannel(url) : null;
+    console.log('Extracted channel name:', channelName);
 
     if (!channelName) {
       setHasError(true);
@@ -42,6 +45,12 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
     iframe.height = '100%';
     iframe.allowFullscreen = true;
     iframe.style.border = 'none';
+
+    // Add error handler
+    iframe.onerror = () => {
+      console.error('Iframe failed to load');
+      setHasError(true);
+    };
 
     containerRef.current.appendChild(iframe);
 
