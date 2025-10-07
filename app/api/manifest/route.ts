@@ -13,9 +13,9 @@ export async function GET() {
     miniapp: {
       version: '1',
       name: 'Take0ver TV',
-      iconUrl: `${env.appUrl}/logo.svg`,
+      iconUrl: `${env.appUrl}/icon.png`,
       homeUrl: env.appUrl,
-      splashImageUrl: `${env.appUrl}/logo.svg`,
+      splashImageUrl: `${env.appUrl}/icon.png`,
       splashBackgroundColor: '#000000',
     },
   };

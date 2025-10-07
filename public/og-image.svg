@@ -28,7 +28,7 @@
   <polygon points="250,150 250,210 330,180" fill="#ff00ff" opacity="0.8"/>
 
   <!-- Title -->
-  <text x="300" y="330" font-family="monospace" font-size="48" font-weight="bold" fill="#ff00ff" text-anchor="middle">TAKEOVER • TV</text>
+  <text x="300" y="330" font-family="monospace" font-size="48" font-weight="bold" fill="#ff00ff" text-anchor="middle">TAKE0VER • TV</text>
   <text x="300" y="360" font-family="monospace" font-size="16" fill="#00ffff" text-anchor="middle">COMMUNITY CONTROLLED TELEVISION</text>
 
   <!-- Corner decorations -->

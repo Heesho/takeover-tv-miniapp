@@ -15,8 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://placehold.co/600x400/000000/FF00FF?text=Take0ver+TV","button":{"title":"Watch & Take0ver","action":{"type":"launch_miniapp","name":"Take0ver TV","splashImageUrl":"https://placehold.co/200x200/000000/FF00FF?text=TV","splashBackgroundColor":"#000000"}}}' />
-        <meta name="fc:frame" content='{"version":"1","imageUrl":"https://placehold.co/600x400/000000/FF00FF?text=Take0ver+TV","button":{"title":"Watch & Take0ver","action":{"type":"launch_frame","name":"Take0ver TV","splashImageUrl":"https://placehold.co/200x200/000000/FF00FF?text=TV","splashBackgroundColor":"#000000"}}}' />
+        <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://take0ver-tv.vercel.app/og-image.svg","button":{"title":"Watch & Take0ver","action":{"type":"launch_miniapp","name":"Take0ver TV","splashImageUrl":"https://take0ver-tv.vercel.app/icon.png","splashBackgroundColor":"#000000"}}}' />
+        <meta name="fc:frame" content='{"version":"1","imageUrl":"https://take0ver-tv.vercel.app/og-image.svg","button":{"title":"Watch & Take0ver","action":{"type":"launch_frame","name":"Take0ver TV","splashImageUrl":"https://take0ver-tv.vercel.app/icon.png","splashBackgroundColor":"#000000"}}}' />
       </head>
       <body>
         <Providers>{children}</Providers>
