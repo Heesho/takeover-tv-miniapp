@@ -4,4 +4,5 @@ export const env = {
   usdcContract: (process.env.NEXT_PUBLIC_USDC_CONTRACT || '0x6c268B147FeB6d50a165F2357cE2eC57EF17d5B7') as `0x${string}`,
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   defaultChannel: process.env.NEXT_PUBLIC_DEFAULT_CHANNEL || 'gamesdonequick',
+  alchemyRpcUrl: process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || '',
 } as const;
