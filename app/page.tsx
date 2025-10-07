@@ -27,6 +27,17 @@ export default function Home() {
     isApprovePending,
   } = useTelevision();
 
+  // Log channel changes for debugging
+  useEffect(() => {
+    if (slot0) {
+      console.log('📺 Channel updated from contract:', {
+        owner: slot0.owner,
+        uri: slot0.uri,
+        price: currentPrice.toString(),
+      });
+    }
+  }, [slot0?.uri, slot0?.owner, currentPrice]);
+
   // Call sdk.actions.ready() as soon as the app finishes loading
   useEffect(() => {
     // Only call ready() after initial data loading is complete
