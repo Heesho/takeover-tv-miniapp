@@ -62,12 +62,12 @@ export default function Home() {
     setIsPoweredOn(false);
   };
 
-  const handleTakeover = async (url: string) => {
-    await takeover(url);
+  const handleTakeover = (url: string) => {
+    takeover(url);
   };
 
-  const handleApprove = async (amount: bigint) => {
-    await approve(amount);
+  const handleApprove = (amount: bigint) => {
+    approve(amount);
   };
 
   // Show loading state

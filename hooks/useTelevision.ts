@@ -1,4 +1,4 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useSimulateContract } from 'wagmi';
 import { useEffect } from 'react';
 import { televisionAbi } from '@/contracts/television-abi';
 import { usdcAbi } from '@/contracts/usdc-abi';
@@ -25,8 +25,8 @@ interface UseTelevisionReturn {
   userAllowance: bigint;
 
   // Actions
-  takeover: (uri: string) => Promise<void>;
-  approve: (amount: bigint) => Promise<void>;
+  takeover: (uri: string) => void;
+  approve: (amount: bigint) => void;
 
   // Transaction states
   isTakeoverPending: boolean;
@@ -97,6 +97,19 @@ export function useTelevision(): UseTelevisionReturn {
     error: takeoverWriteError,
   } = useWriteContract();
 
+  // Log errors for debugging
+  useEffect(() => {
+    if (approveWriteError) {
+      console.error('Approve write error:', approveWriteError);
+    }
+  }, [approveWriteError]);
+
+  useEffect(() => {
+    if (takeoverWriteError) {
+      console.error('Takeover write error:', takeoverWriteError);
+    }
+  }, [takeoverWriteError]);
+
   // Wait for approve transaction
   const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({
     hash: approveHash,
@@ -123,23 +136,23 @@ export function useTelevision(): UseTelevisionReturn {
   }, [isTakeoverSuccess, refetchSlot0, refetchPrice]);
 
   // Actions
-  const approve = async (amount: bigint) => {
+  const approve = (amount: bigint) => {
     if (!address) throw new Error('Wallet not connected');
 
-    try {
-      writeApprove({
-        address: env.usdcContract,
-        abi: usdcAbi,
-        functionName: 'approve',
-        args: [env.televisionContract, amount],
-      });
-    } catch (error) {
-      console.error('Approve transaction failed:', error);
-      throw error;
-    }
+    console.log('Initiating approve transaction...', {
+      amount: amount.toString(),
+      spender: env.televisionContract,
+    });
+
+    writeApprove({
+      address: env.usdcContract,
+      abi: usdcAbi,
+      functionName: 'approve',
+      args: [env.televisionContract, amount],
+    });
   };
 
-  const takeover = async (uri: string) => {
+  const takeover = (uri: string) => {
     if (!address) throw new Error('Wallet not connected');
     if (!slot0Data) throw new Error('Channel data not loaded');
 
@@ -148,6 +161,25 @@ export function useTelevision(): UseTelevisionReturn {
 
     // Set max payment amount: current price + 10% buffer to prevent front-running
     const maxPaymentAmount = currentPrice + (currentPrice * 10n) / 100n;
+
+    console.log('Initiating takeover transaction...', {
+      uri,
+      channelOwner: address,
+      epochId: slot0Data.epochId,
+      deadline: deadline.toString(),
+      maxPaymentAmount: maxPaymentAmount.toString(),
+      currentPrice: currentPrice.toString(),
+      userAllowance: userAllowance.toString(),
+    });
+
+    // Validation checks
+    if (userAllowance < currentPrice) {
+      throw new Error('Insufficient USDC allowance. Please approve first.');
+    }
+
+    if (userBalance < currentPrice) {
+      throw new Error('Insufficient USDC balance.');
+    }
 
     writeTakeover({
       address: env.televisionContract,

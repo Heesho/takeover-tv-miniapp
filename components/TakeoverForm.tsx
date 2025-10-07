@@ -8,8 +8,8 @@ interface TakeoverFormProps {
   currentPrice: bigint;
   userBalance: bigint;
   userAllowance: bigint;
-  onTakeover: (url: string) => Promise<void>;
-  onApprove: (amount: bigint) => Promise<void>;
+  onTakeover: (url: string) => void;
+  onApprove: (amount: bigint) => void;
   isPending: boolean;
   isApprovePending: boolean;
   isApproveSuccess: boolean;
@@ -55,31 +55,35 @@ export function TakeoverForm({
   const needsApproval = userAllowance < currentPrice;
   const hasInsufficientBalance = currentPrice > userBalance;
 
-  const handleApprove = async () => {
+  const handleApprove = () => {
     if (!isValidUrl) return;
 
     try {
       setMessage('Approving USDC...');
-      await onApprove(currentPrice);
-      // Don't show success here - wait for transaction to confirm
+      onApprove(currentPrice);
+      // Clear message after wallet popup appears
+      setTimeout(() => setMessage(''), 500);
     } catch (error) {
       console.error('Approval failed:', error);
-      setMessage('Approval failed. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Approval failed. Please try again.';
+      setMessage(errorMessage);
       setTimeout(() => setMessage(''), 3000);
     }
   };
 
-  const handleTakeover = async () => {
+  const handleTakeover = () => {
     if (!isValidUrl) return;
 
     try {
       setMessage('Executing Take0ver...');
-      await onTakeover(url);
-      // Don't show success here - wait for transaction to confirm
+      onTakeover(url);
+      // Clear message after wallet popup appears
+      setTimeout(() => setMessage(''), 500);
     } catch (error) {
       console.error('Take0ver failed:', error);
-      setMessage('Take0ver failed. Please try again.');
-      setTimeout(() => setMessage(''), 3000);
+      const errorMessage = error instanceof Error ? error.message : 'Take0ver failed. Please try again.';
+      setMessage(errorMessage);
+      setTimeout(() => setMessage(''), 5000);
     }
   };
 
@@ -160,7 +164,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver payment goes to the previous TV owner.
+        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver payment goes to the previous broadcaster.
       </p>
 
       {/* Message Overlay */}

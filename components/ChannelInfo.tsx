@@ -21,9 +21,9 @@ export function ChannelInfo({
 
   return (
     <div className="grid grid-cols-2 gap-3 px-4 flex-shrink-0">
-      {/* TV Owner */}
+      {/* Broadcaster */}
       <div className="border border-gray-800 p-3 rounded-lg bg-black/20 flex flex-col justify-between">
-        <p className="text-xs text-gray-400 mb-1">TV OWNER</p>
+        <p className="text-xs text-gray-400 mb-1">BROADCASTER</p>
         <div className="flex items-center space-x-2">
           <img
             src={ownerPfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${ownerAddress}`}
