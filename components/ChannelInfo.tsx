@@ -43,7 +43,7 @@ export function ChannelInfo({
 
       {/* Takeover Price */}
       <div className="border border-gray-800 p-3 rounded-lg bg-black/20 flex flex-col justify-between">
-        <p className="text-xs text-gray-400 mb-1">TAKEOVER PRICE</p>
+        <p className="text-xs text-gray-400 mb-1">TAKE0VER PRICE</p>
         <p
           className="text-retro-pink text-4xl font-bold"
           style={{ textShadow: '0 0 5px var(--accent-color)' }}

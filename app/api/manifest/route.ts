@@ -12,7 +12,7 @@ export async function GET() {
     },
     miniapp: {
       version: '1',
-      name: 'Takeover TV',
+      name: 'Take0ver TV',
       iconUrl: `${env.appUrl}/logo.svg`,
       homeUrl: env.appUrl,
       splashImageUrl: `${env.appUrl}/logo.svg`,

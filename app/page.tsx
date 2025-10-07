@@ -112,7 +112,7 @@ export default function Home() {
                     />
                   </svg>
                 </button>
-                <h1 className="text-xl tracking-wider">TAKEOVER TV</h1>
+                <h1 className="text-xl tracking-wider">TAKE0VER TV</h1>
               </div>
 
               {/* User Profile */}

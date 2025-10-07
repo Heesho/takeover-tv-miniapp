@@ -6,10 +6,10 @@
   },
   "miniapp": {
     "version": "1",
-    "name": "Takeover TV",
-    "iconUrl": "https://takeover-tv-miniapp.vercel.app/icon.png",
-    "homeUrl": "https://takeover-tv-miniapp.vercel.app",
-    "splashImageUrl": "https://takeover-tv-miniapp.vercel.app/icon.png",
+    "name": "Take0ver TV",
+    "iconUrl": "https://take0ver-tv.vercel.app/logo.svg",
+    "homeUrl": "https://take0ver-tv.vercel.app",
+    "splashImageUrl": "https://take0ver-tv.vercel.app/logo.svg",
     "splashBackgroundColor": "#000000"
   }
 }

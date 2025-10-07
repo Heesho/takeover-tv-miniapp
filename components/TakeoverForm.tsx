@@ -38,7 +38,7 @@ export function TakeoverForm({
   // Show success message when approval transaction confirms
   useEffect(() => {
     if (isApproveSuccess) {
-      setMessage('Approval successful! Click TAKEOVER to continue.');
+      setMessage('Approval successful! Click TAKE0VER to continue.');
       setTimeout(() => setMessage(''), 3000);
     }
   }, [isApproveSuccess]);
@@ -46,7 +46,7 @@ export function TakeoverForm({
   // Show success message when takeover transaction confirms
   useEffect(() => {
     if (isTakeoverSuccess) {
-      setMessage('TAKEOVER SUCCESSFUL!');
+      setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
       setTimeout(() => setMessage(''), 3000);
     }
@@ -73,12 +73,12 @@ export function TakeoverForm({
     if (!isValidUrl) return;
 
     try {
-      setMessage('Executing Takeover...');
+      setMessage('Executing Take0ver...');
       await onTakeover(url);
       // Don't show success here - wait for transaction to confirm
     } catch (error) {
-      console.error('Takeover failed:', error);
-      setMessage('Takeover failed. Please try again.');
+      console.error('Take0ver failed:', error);
+      setMessage('Take0ver failed. Please try again.');
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -87,7 +87,7 @@ export function TakeoverForm({
     if (!isValidUrl) return 'ENTER A VALID URL';
     if (hasInsufficientBalance) return 'INSUFFICIENT BALANCE';
     if (needsApproval) return 'APPROVE';
-    return 'TAKEOVER';
+    return 'TAKE0VER';
   };
 
   const getButtonAction = () => {
@@ -160,7 +160,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Takeover the TV to broadcast a stream. Price doubles on takeover then drops to $0 over 1 hour. 90% of the takeover price goes to the previous TV owner.
+        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver price goes to the previous TV owner.
       </p>
 
       {/* Message Overlay */}
