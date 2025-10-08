@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatUnits } from 'viem';
 import { isValidTwitchUrl } from '@/utils/twitch';
 
@@ -31,24 +31,34 @@ export function TakeoverForm({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Track if we've shown success messages to prevent duplicate displays
+  const hasShownApproveSuccess = useRef(false);
+  const hasShownTakeoverSuccess = useRef(false);
+
   useEffect(() => {
     setIsValidUrl(url ? isValidTwitchUrl(url) : false);
   }, [url]);
 
-  // Show success message when approval transaction confirms
+  // Show success message when approval transaction confirms (only once)
   useEffect(() => {
-    if (isApproveSuccess) {
+    if (isApproveSuccess && !hasShownApproveSuccess.current) {
+      hasShownApproveSuccess.current = true;
       setMessage('Approval successful! Click TAKE0VER to continue.');
       setTimeout(() => setMessage(''), 1500);
+    } else if (!isApproveSuccess) {
+      hasShownApproveSuccess.current = false;
     }
   }, [isApproveSuccess]);
 
-  // Show success message when takeover transaction confirms
+  // Show success message when takeover transaction confirms (only once)
   useEffect(() => {
-    if (isTakeoverSuccess) {
+    if (isTakeoverSuccess && !hasShownTakeoverSuccess.current) {
+      hasShownTakeoverSuccess.current = true;
       setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
       setTimeout(() => setMessage(''), 1500);
+    } else if (!isTakeoverSuccess) {
+      hasShownTakeoverSuccess.current = false;
     }
   }, [isTakeoverSuccess]);
 
