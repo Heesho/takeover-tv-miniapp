@@ -62,8 +62,26 @@ export function TakeoverForm({
     }
   }, [isTakeoverSuccess]);
 
-  const needsApproval = userAllowance < currentPrice;
-  const hasInsufficientBalance = currentPrice > userBalance;
+  // When price is $0, no approval or balance check needed
+  const isFreePrice = currentPrice === 0n;
+  const needsApproval = !isFreePrice && userAllowance < currentPrice;
+  const hasInsufficientBalance = !isFreePrice && currentPrice > userBalance;
+
+  // Debug logging for button state when price is $0
+  useEffect(() => {
+    if (isFreePrice && url) {
+      console.log('🎯 Free takeover available! Button state:', {
+        isValidUrl,
+        hasInsufficientBalance,
+        isPending,
+        isApprovePending,
+        isDisabled: !isValidUrl || hasInsufficientBalance || isPending || isApprovePending,
+        currentPrice: currentPrice.toString(),
+        userBalance: userBalance.toString(),
+        userAllowance: userAllowance.toString(),
+      });
+    }
+  }, [isFreePrice, isValidUrl, hasInsufficientBalance, isPending, isApprovePending, currentPrice, userBalance, userAllowance, url]);
 
   const handleApprove = () => {
     if (!isValidUrl) return;
