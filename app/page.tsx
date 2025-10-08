@@ -80,7 +80,7 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-black text-white flex items-center justify-center min-h-screen p-2">
+    <div className="bg-black text-white flex items-center justify-center min-h-screen">
       <div className="w-full max-w-md mx-auto h-auto aspect-[9/19.5] max-h-[95vh] flex flex-col">
         {/* Power On Screen */}
         {!isPoweredOn ? (
