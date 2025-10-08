@@ -69,15 +69,12 @@ export function TakeoverForm({
     if (!isValidUrl) return;
 
     try {
-      setMessage('Approving USDC...');
       onApprove(currentPrice);
-      // Clear message after wallet popup appears
-      setTimeout(() => setMessage(''), 500);
     } catch (error) {
       console.error('Approval failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Approval failed. Please try again.';
       setMessage(errorMessage);
-      setTimeout(() => setMessage(''), 3000);
+      setTimeout(() => setMessage(''), 5000);
     }
   };
 
@@ -85,10 +82,7 @@ export function TakeoverForm({
     if (!isValidUrl) return;
 
     try {
-      setMessage('Executing Take0ver...');
       onTakeover(url);
-      // Clear message after wallet popup appears
-      setTimeout(() => setMessage(''), 500);
     } catch (error) {
       console.error('Take0ver failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Take0ver failed. Please try again.';
