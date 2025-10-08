@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect, useReconnect } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { StartOverlay } from '@/components/StartOverlay';
 import { VideoPlayer } from '@/components/VideoPlayer';
@@ -13,7 +13,9 @@ import { env } from '@/utils/env';
 
 export default function Home() {
   const [isPoweredOn, setIsPoweredOn] = useState(false);
-  const { address } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { reconnect } = useReconnect();
+  const { connect, connectors } = useConnect();
   const { user, isLoading: isUserLoading } = useFarcasterContext();
   const {
     slot0,
@@ -28,6 +30,33 @@ export default function Home() {
     isApproveSuccess,
     isTakeoverSuccess,
   } = useTelevision();
+
+  // Automatically reconnect wallet on mount
+  useEffect(() => {
+    reconnect();
+  }, [reconnect]);
+
+  // Try to connect if not connected and user is loaded
+  useEffect(() => {
+    if (!isConnected && !isConnecting && !isReconnecting && !isUserLoading && user) {
+      console.log('Wallet not connected, attempting to connect...');
+      const farcasterConnector = connectors.find(c => c.id === 'farcasterMiniApp');
+      if (farcasterConnector) {
+        connect({ connector: farcasterConnector });
+      }
+    }
+  }, [isConnected, isConnecting, isReconnecting, isUserLoading, user, connect, connectors]);
+
+  // Log wallet connection status
+  useEffect(() => {
+    console.log('Wallet status:', {
+      address,
+      isConnected,
+      isConnecting,
+      isReconnecting,
+      userFid: user?.fid,
+    });
+  }, [address, isConnected, isConnecting, isReconnecting, user?.fid]);
 
   // Log channel changes for debugging
   useEffect(() => {

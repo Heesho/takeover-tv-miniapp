@@ -63,7 +63,7 @@ export function useTelevision(): UseTelevisionReturn {
     },
   });
 
-  // Read user's USDC balance
+  // Read user's USDC balance - poll every 2 seconds to catch wallet connection
   const { data: userBalance = 0n, error: balanceError, isLoading: isBalanceLoading } = useReadContract({
     address: env.usdcContract,
     abi: usdcAbi,
@@ -71,18 +71,21 @@ export function useTelevision(): UseTelevisionReturn {
     args: address ? [address] : undefined,
     query: {
       enabled: !!address, // Only run when address is available
+      refetchInterval: 2000, // Poll every 2 seconds to update when wallet connects
     },
   });
 
-  // Log balance errors for debugging
+  // Log balance and connection status for debugging
   useEffect(() => {
     if (balanceError) {
       console.error('USDC balance read error:', balanceError);
     }
     if (address) {
-      console.log('User address:', address);
-      console.log('User USDC balance:', userBalance.toString());
+      console.log('Wallet connected:', address);
+      console.log('USDC balance:', userBalance.toString(), `($${(Number(userBalance) / 1000000).toFixed(2)})`);
       console.log('Balance loading:', isBalanceLoading);
+    } else {
+      console.warn('Wallet not connected - waiting for address...');
     }
   }, [balanceError, userBalance, address, isBalanceLoading]);
 
