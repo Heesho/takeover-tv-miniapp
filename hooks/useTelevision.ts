@@ -1,8 +1,9 @@
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useSimulateContract } from 'wagmi';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount, useChainId } from 'wagmi';
 import { useEffect } from 'react';
 import { televisionAbi } from '@/contracts/television-abi';
 import { usdcAbi } from '@/contracts/usdc-abi';
 import { env } from '@/utils/env';
+import { base } from 'wagmi/chains';
 
 interface Slot0 {
   locked: number;
@@ -42,6 +43,16 @@ interface UseTelevisionReturn {
  */
 export function useTelevision(): UseTelevisionReturn {
   const { address } = useAccount();
+  const chainId = useChainId();
+
+  // Log chainId for debugging connector issues
+  useEffect(() => {
+    console.log('Chain info:', {
+      chainIdFromHook: chainId,
+      baseChainId: base.id,
+      envChainId: env.chainId,
+    });
+  }, [chainId]);
 
   // Read current slot0 (channel data) - poll every 2 seconds
   const { data: slot0Data, isLoading: isSlot0Loading, error: slot0Error, refetch: refetchSlot0 } = useReadContract({
@@ -160,6 +171,8 @@ export function useTelevision(): UseTelevisionReturn {
     console.log('Initiating approve transaction...', {
       amount: amount.toString(),
       spender: env.televisionContract,
+      chainId: base.id,
+      chainIdFromHook: chainId,
     });
 
     writeApprove({
@@ -167,7 +180,7 @@ export function useTelevision(): UseTelevisionReturn {
       abi: usdcAbi,
       functionName: 'approve',
       args: [env.televisionContract, amount],
-      chainId: env.chainId,
+      chainId: base.id, // Always use Base mainnet (8453)
     });
   };
 
@@ -205,7 +218,7 @@ export function useTelevision(): UseTelevisionReturn {
       abi: televisionAbi,
       functionName: 'takeover',
       args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
-      chainId: env.chainId,
+      chainId: base.id, // Always use Base mainnet (8453)
     });
   };
 
