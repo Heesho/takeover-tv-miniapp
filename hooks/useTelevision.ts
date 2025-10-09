@@ -167,6 +167,7 @@ export function useTelevision(): UseTelevisionReturn {
       abi: usdcAbi,
       functionName: 'approve',
       args: [env.televisionContract, amount],
+      chainId: env.chainId,
     });
   };
 
@@ -204,6 +205,7 @@ export function useTelevision(): UseTelevisionReturn {
       abi: televisionAbi,
       functionName: 'takeover',
       args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
+      chainId: env.chainId,
     });
   };
 
