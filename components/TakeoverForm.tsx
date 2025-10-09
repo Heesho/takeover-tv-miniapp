@@ -14,6 +14,8 @@ interface TakeoverFormProps {
   isApprovePending: boolean;
   isApproveSuccess: boolean;
   isTakeoverSuccess: boolean;
+  shouldShowApproveSuccess: boolean;
+  shouldShowTakeoverSuccess: boolean;
 }
 
 export function TakeoverForm({
@@ -26,41 +28,32 @@ export function TakeoverForm({
   isApprovePending,
   isApproveSuccess,
   isTakeoverSuccess,
+  shouldShowApproveSuccess,
+  shouldShowTakeoverSuccess,
 }: TakeoverFormProps) {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Track if we've shown success messages to prevent duplicate displays
-  const hasShownApproveSuccess = useRef(false);
-  const hasShownTakeoverSuccess = useRef(false);
-
   useEffect(() => {
     setIsValidUrl(url ? isValidTwitchUrl(url) : false);
   }, [url]);
 
-  // Show success message when approval transaction confirms (only once)
+  // Show success message when parent indicates we should (handles power cycle correctly)
   useEffect(() => {
-    if (isApproveSuccess && !hasShownApproveSuccess.current) {
-      hasShownApproveSuccess.current = true;
+    if (shouldShowApproveSuccess) {
       setMessage('Approval successful! Click TAKE0VER to continue.');
       setTimeout(() => setMessage(''), 1500);
-    } else if (!isApproveSuccess) {
-      hasShownApproveSuccess.current = false;
     }
-  }, [isApproveSuccess]);
+  }, [shouldShowApproveSuccess]);
 
-  // Show success message when takeover transaction confirms (only once)
   useEffect(() => {
-    if (isTakeoverSuccess && !hasShownTakeoverSuccess.current) {
-      hasShownTakeoverSuccess.current = true;
+    if (shouldShowTakeoverSuccess) {
       setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
       setTimeout(() => setMessage(''), 1500);
-    } else if (!isTakeoverSuccess) {
-      hasShownTakeoverSuccess.current = false;
     }
-  }, [isTakeoverSuccess]);
+  }, [shouldShowTakeoverSuccess]);
 
   // When price is $0, no approval or balance check needed
   const isFreePrice = currentPrice === 0n;

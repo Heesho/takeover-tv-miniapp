@@ -13,6 +13,8 @@ import { env } from '@/utils/env';
 
 export default function Home() {
   const [isPoweredOn, setIsPoweredOn] = useState(false);
+  const [lastShownTakeoverSuccess, setLastShownTakeoverSuccess] = useState(false);
+  const [lastShownApproveSuccess, setLastShownApproveSuccess] = useState(false);
   const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { reconnect } = useReconnect();
   const { connect, connectors } = useConnect();
@@ -46,6 +48,25 @@ export default function Home() {
       }
     }
   }, [isConnected, isConnecting, isReconnecting, isUserLoading, user, connect, connectors]);
+
+  // Track success states to prevent showing stale messages after TV power cycle
+  useEffect(() => {
+    if (isTakeoverSuccess && isTakeoverSuccess !== lastShownTakeoverSuccess) {
+      setLastShownTakeoverSuccess(true);
+    } else if (!isTakeoverSuccess && lastShownTakeoverSuccess) {
+      // Reset when transaction completes/resets for next transaction
+      setLastShownTakeoverSuccess(false);
+    }
+  }, [isTakeoverSuccess, lastShownTakeoverSuccess]);
+
+  useEffect(() => {
+    if (isApproveSuccess && isApproveSuccess !== lastShownApproveSuccess) {
+      setLastShownApproveSuccess(true);
+    } else if (!isApproveSuccess && lastShownApproveSuccess) {
+      // Reset when transaction completes/resets for next transaction
+      setLastShownApproveSuccess(false);
+    }
+  }, [isApproveSuccess, lastShownApproveSuccess]);
 
   // Log wallet connection status
   useEffect(() => {
@@ -185,6 +206,8 @@ export default function Home() {
               isApprovePending={isApprovePending}
               isApproveSuccess={isApproveSuccess}
               isTakeoverSuccess={isTakeoverSuccess}
+              shouldShowApproveSuccess={isApproveSuccess && isApproveSuccess !== lastShownApproveSuccess}
+              shouldShowTakeoverSuccess={isTakeoverSuccess && isTakeoverSuccess !== lastShownTakeoverSuccess}
             />
           </div>
         )}
