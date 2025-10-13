@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { sdk } from '@farcaster/miniapp-sdk';
+import defaultSdk, { sdk as namedSdk } from '@farcaster/miniapp-sdk';
 
 export function MiniAppReady() {
   const calledRef = useRef(false);
@@ -13,7 +13,8 @@ export function MiniAppReady() {
 
         const tryReady = async () => {
           try {
-            await (sdk as any)?.actions?.ready?.();
+            const bridge: any = (namedSdk as any) ?? (defaultSdk as any);
+            await bridge?.actions?.ready?.();
             calledRef.current = true;
             console.log('[MiniAppReady] ready() success');
             return true;

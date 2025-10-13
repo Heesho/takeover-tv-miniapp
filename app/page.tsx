@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useReconnect } from "wagmi";
-import { sdk } from "@farcaster/miniapp-sdk";
+import defaultSdk, { sdk as namedSdk } from "@farcaster/miniapp-sdk";
 import { StartOverlay } from "@/components/StartOverlay";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { ChannelInfo } from "@/components/ChannelInfo";
@@ -108,7 +108,8 @@ export default function Home() {
         // Try immediately, then retry briefly in case host bridge isn't ready yet
         const tryReady = async () => {
           try {
-            await (sdk as any)?.actions?.ready?.();
+            const bridge: any = (namedSdk as any) ?? (defaultSdk as any);
+            await bridge?.actions?.ready?.();
             readyCalledRef.current = true;
             console.log("Mini App ready() success");
             return true;
