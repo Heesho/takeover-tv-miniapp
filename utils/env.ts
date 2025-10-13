@@ -1,11 +1,18 @@
-function mustGet(name: string): string {
-  const val = process.env[name];
+// Validate required envs without relying on dynamic process.env access on the client.
+// Next.js inlines NEXT_PUBLIC_* at build time, but only for static property access.
+// Dynamic reads like process.env[name] become undefined on the client. Avoid them.
+function mustGetInline(val: string | undefined, name: string): string {
   if (!val) {
     const msg = `Missing required environment variable: ${name}`;
-    if (process.env.NODE_ENV === 'production') throw new Error(msg);
+    // Only throw on the server to avoid breaking the Mini App splash dismissal
+    // when a client bundle runs without inline envs for any reason.
+    if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
+      throw new Error(msg);
+    }
     console.warn(msg);
+    return '';
   }
-  return val || '';
+  return val;
 }
 
 const raw = {
@@ -17,19 +24,19 @@ const raw = {
   NEXT_PUBLIC_ALCHEMY_RPC_URL: process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || '',
 };
 
-// In production, enforce required vars are set explicitly.
-if (process.env.NODE_ENV === 'production') {
-  mustGet('NEXT_PUBLIC_CHAIN_ID');
-  mustGet('NEXT_PUBLIC_TELEVISION_CONTRACT');
-  mustGet('NEXT_PUBLIC_USDC_CONTRACT');
-  mustGet('NEXT_PUBLIC_APP_URL');
-}
+// In production, enforce required vars are set explicitly (server-only throw, client warn).
+const REQUIRED = {
+  NEXT_PUBLIC_CHAIN_ID: mustGetInline(raw.NEXT_PUBLIC_CHAIN_ID, 'NEXT_PUBLIC_CHAIN_ID'),
+  NEXT_PUBLIC_TELEVISION_CONTRACT: mustGetInline(raw.NEXT_PUBLIC_TELEVISION_CONTRACT, 'NEXT_PUBLIC_TELEVISION_CONTRACT'),
+  NEXT_PUBLIC_USDC_CONTRACT: mustGetInline(raw.NEXT_PUBLIC_USDC_CONTRACT, 'NEXT_PUBLIC_USDC_CONTRACT'),
+  NEXT_PUBLIC_APP_URL: mustGetInline(raw.NEXT_PUBLIC_APP_URL, 'NEXT_PUBLIC_APP_URL'),
+};
 
 export const env = {
-  chainId: parseInt(raw.NEXT_PUBLIC_CHAIN_ID || '8453', 10),
-  televisionContract: (raw.NEXT_PUBLIC_TELEVISION_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-  usdcContract: (raw.NEXT_PUBLIC_USDC_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`,
-  appUrl: raw.NEXT_PUBLIC_APP_URL,
+  chainId: parseInt(REQUIRED.NEXT_PUBLIC_CHAIN_ID || '8453', 10),
+  televisionContract: (REQUIRED.NEXT_PUBLIC_TELEVISION_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`,
+  usdcContract: (REQUIRED.NEXT_PUBLIC_USDC_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`,
+  appUrl: REQUIRED.NEXT_PUBLIC_APP_URL,
   defaultChannel: raw.NEXT_PUBLIC_DEFAULT_CHANNEL,
   // Optional RPC. When empty, wagmi will use default/public.
   alchemyRpcUrl: raw.NEXT_PUBLIC_ALCHEMY_RPC_URL,
