@@ -209,18 +209,28 @@ export default function Home() {
   const approveErrorMessage = mapErrorFriendly(approveError);
   const takeoverErrorMessage = mapErrorFriendly(takeoverError);
 
-  // Safe area insets
-  const safeArea = (sdk as any)?.context?.client?.safeAreaInsets as
-    | { top: number; bottom: number; left: number; right: number }
-    | undefined;
-  const safeAreaStyle = safeArea
-    ? {
-        paddingTop: safeArea.top,
-        paddingBottom: safeArea.bottom,
-        paddingLeft: safeArea.left,
-        paddingRight: safeArea.right,
+  // Safe area insets (resolved via async context to avoid proxy path errors)
+  const [safeAreaStyle, setSafeAreaStyle] = useState<React.CSSProperties | undefined>(undefined);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const ctx: any = await (sdk as any)?.context;
+        const insets = ctx?.client?.safeAreaInsets;
+        if (!mounted || !insets) return;
+        const top = Number(insets.top ?? 0);
+        const bottom = Number(insets.bottom ?? 0);
+        const left = Number(insets.left ?? 0);
+        const right = Number(insets.right ?? 0);
+        setSafeAreaStyle({ paddingTop: top, paddingBottom: bottom, paddingLeft: left, paddingRight: right });
+      } catch {
+        // ignore; style remains undefined
       }
-    : undefined;
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   if (isUserLoading || isChannelLoading) {
     return (
