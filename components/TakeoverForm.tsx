@@ -41,6 +41,13 @@ export function TakeoverForm({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Auto-clear any banner message after a short delay and allow manual dismiss
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(''), 2000);
+    return () => clearTimeout(t);
+  }, [message]);
+
   // Prefill URL from context (e.g., cast_share/cast_embed), if provided
   useEffect(() => {
     if (!url && initialUrl && isValidTwitchUrl(initialUrl)) {
@@ -56,8 +63,6 @@ export function TakeoverForm({
   useEffect(() => {
     if (shouldShowApproveSuccess) {
       setMessage('Approval successful! Click TAKE0VER to continue.');
-      const t = setTimeout(() => setMessage(''), 1500);
-      return () => clearTimeout(t);
     }
   }, [shouldShowApproveSuccess]);
 
@@ -65,8 +70,6 @@ export function TakeoverForm({
     if (shouldShowTakeoverSuccess) {
       setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
-      const t = setTimeout(() => setMessage(''), 1500);
-      return () => clearTimeout(t);
     }
   }, [shouldShowTakeoverSuccess]);
 
@@ -74,16 +77,12 @@ export function TakeoverForm({
   useEffect(() => {
     if (approveErrorMessage) {
       setMessage(approveErrorMessage);
-      const t = setTimeout(() => setMessage(''), 4000);
-      return () => clearTimeout(t);
     }
   }, [approveErrorMessage]);
 
   useEffect(() => {
     if (takeoverErrorMessage) {
       setMessage(takeoverErrorMessage);
-      const t = setTimeout(() => setMessage(''), 4000);
-      return () => clearTimeout(t);
     }
   }, [takeoverErrorMessage]);
 
@@ -185,7 +184,10 @@ export function TakeoverForm({
 
       {/* Message Overlay */}
       {message && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 cursor-pointer"
+          onClick={() => setMessage('')}
+        >
           <p className="text-white text-lg text-center">{message}</p>
         </div>
       )}
