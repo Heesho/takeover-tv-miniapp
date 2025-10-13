@@ -217,9 +217,13 @@ export default function Home() {
       try {
         const ctx: any = await (sdk as any)?.context;
         const insets = ctx?.client?.safeAreaInsets;
+        const platform = ctx?.client?.platformType as 'web' | 'mobile' | undefined;
         if (!mounted || !insets) return;
-        const top = Number(insets.top ?? 0);
-        const bottom = Number(insets.bottom ?? 0);
+        // Clamp safe-area padding on web to avoid excessive top gap
+        const topRaw = Number(insets.top ?? 0);
+        const bottomRaw = Number(insets.bottom ?? 0);
+        const top = platform === 'web' ? 0 : topRaw;
+        const bottom = platform === 'web' ? 0 : bottomRaw;
         const left = Number(insets.left ?? 0);
         const right = Number(insets.right ?? 0);
         setSafeAreaStyle({ paddingTop: top, paddingBottom: bottom, paddingLeft: left, paddingRight: right });
@@ -248,7 +252,7 @@ export default function Home() {
             <StartOverlay onStart={handlePowerOn} />
           </div>
         ) : (
-          <div className="flex flex-col h-full space-y-3 py-3 tv-border">
+          <div className="flex flex-col h-full space-y-2 py-2 tv-border">
             {/* Header */}
             <div className="flex items-center justify-between px-3 flex-shrink-0">
               {/* Left: Power + Title */}
