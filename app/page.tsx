@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useReconnect } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { StartOverlay } from "@/components/StartOverlay";
@@ -13,6 +13,7 @@ import { env } from "@/utils/env";
 import { useMiniAppCapabilities } from "@/hooks/useMiniAppCapabilities";
 import { isValidTwitchUrl } from "@/utils/twitch";
 import { useMiniAppEvents } from "@/hooks/useMiniAppEvents";
+import { isInMiniAppAsync } from "@/utils/miniapp";
 
 // Clean error mapper (normalized punctuation)
 function mapErrorFriendly(err?: Error | null): string | undefined {
@@ -99,15 +100,21 @@ export default function Home() {
     }
   }, [isApproveSuccess, lastShownApproveSuccess, capabilities]);
 
-  // sdk.ready when stable
+  // Ensure ready() is called promptly inside Mini App to dismiss splash
+  const readyCalledRef = useRef(false);
   useEffect(() => {
-    if (!isUserLoading && !isChannelLoading) {
-      sdk.actions
-        .ready()
-        .then(() => console.log("Mini App ready called successfully"))
-        .catch((e) => console.error("Failed to call sdk.actions.ready():", e));
-    }
-  }, [isUserLoading, isChannelLoading]);
+    (async () => {
+      try {
+        const inMini = await isInMiniAppAsync(150);
+        if (!inMini || readyCalledRef.current) return;
+        await (sdk as any)?.actions?.ready?.();
+        readyCalledRef.current = true;
+        console.log("Mini App ready() called on mount");
+      } catch (e) {
+        console.warn("ready() call failed on mount", e);
+      }
+    })();
+  }, []);
 
   const handlePowerOn = async () => setIsPoweredOn(true);
   const handlePowerOff = () => setIsPoweredOn(false);

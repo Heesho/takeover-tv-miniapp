@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { isInMiniAppAsync } from '@/utils/miniapp';
 
 interface FarcasterUser {
   fid: number;
@@ -23,28 +24,57 @@ export function useFarcasterContext(): FarcasterContext {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     async function loadContext() {
       try {
-        const context = await sdk.context;
+        // Fast-path: if not in miniapp (or unknown), do not block UI
+        const inMini = await isInMiniAppAsync(200);
+        if (!inMini) {
+          if (mounted) setIsLoading(false);
+          return;
+        }
 
-        if (context?.user) {
+        // Guard sdk.context with a timeout so it can't hang forever
+        const withTimeout = <T,>(p: Promise<T>, ms: number, onTimeout: () => void): Promise<T | undefined> =>
+          new Promise((resolve) => {
+            const t = setTimeout(() => {
+              try { onTimeout(); } catch {}
+              resolve(undefined);
+            }, Math.max(0, ms));
+            p.then((v) => { clearTimeout(t); resolve(v); })
+             .catch(() => { clearTimeout(t); resolve(undefined); });
+          });
+
+        const context = await withTimeout((sdk as any)?.context, 2000, () => {
+          console.warn('sdk.context timed out; proceeding without Farcaster user');
+        });
+
+        if (mounted && context && (context as any)?.user) {
+          const u = (context as any).user;
           setUser({
-            fid: context.user.fid,
-            username: context.user.username || '',
-            displayName: context.user.displayName || '',
-            pfpUrl: context.user.pfpUrl || '',
+            fid: u.fid,
+            username: u.username || '',
+            displayName: u.displayName || '',
+            pfpUrl: u.pfpUrl || '',
           });
         }
 
-        setIsLoading(false);
+        if (mounted) setIsLoading(false);
       } catch (err) {
         console.error('Failed to load Farcaster context:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load context'));
-        setIsLoading(false);
+        if (mounted) {
+          setError(err instanceof Error ? err : new Error('Failed to load context'));
+          setIsLoading(false);
+        }
       }
     }
 
     loadContext();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return { user, isLoading, error };
