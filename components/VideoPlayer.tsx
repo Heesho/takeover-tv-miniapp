@@ -117,6 +117,7 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
 
         // Ensure unmuted playback (redundant but ensures it works)
         player.setMuted(false);
+        try { player.play(); } catch {}
       });
 
       playerRef.current = player;
@@ -147,6 +148,7 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
       playerRef.current.setChannel(channelName);
       // Ensure it stays unmuted after channel change
       playerRef.current.setMuted(false);
+      try { playerRef.current.play(); } catch {}
     }
   }, [channelName, isPlayerReady]);
 

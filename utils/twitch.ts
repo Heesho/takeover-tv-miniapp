@@ -22,9 +22,12 @@ import { getAppHostname } from '@/utils/env';
 export function getKnownParentDomains(): string[] {
   const baseParents = [
     'client.warpcast.com',
+    'warpcast.com',
+    'www.warpcast.com',
     'supercast.xyz',
     'embeds.lfg.castle.fyi',
     'farcaster.xyz',
+    'miniapps.farcaster.xyz',
   ];
 
   const envHost = getAppHostname();
