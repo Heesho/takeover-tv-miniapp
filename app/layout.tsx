@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Providers } from '@/components/Providers';
+import { MiniAppReady } from '@/components/MiniAppReady';
 import { env } from '@/utils/env';
 import './globals.css';
 
@@ -63,6 +64,8 @@ export default function RootLayout({
         <script src="https://player.twitch.tv/js/embed/v1.js" async></script>
       </head>
       <body>
+        {/* Ensure Farcaster splash is dismissed promptly inside Mini App environments */}
+        <MiniAppReady />
         <Providers>{children}</Providers>
       </body>
     </html>

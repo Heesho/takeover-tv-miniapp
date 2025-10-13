@@ -13,7 +13,6 @@ import { env } from "@/utils/env";
 import { useMiniAppCapabilities } from "@/hooks/useMiniAppCapabilities";
 import { isValidTwitchUrl } from "@/utils/twitch";
 import { useMiniAppEvents } from "@/hooks/useMiniAppEvents";
-import { isInMiniAppAsync } from "@/utils/miniapp";
 
 // Clean error mapper (normalized punctuation)
 function mapErrorFriendly(err?: Error | null): string | undefined {
@@ -105,8 +104,7 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       try {
-        const inMini = await isInMiniAppAsync(150);
-        if (!inMini || readyCalledRef.current) return;
+        if (readyCalledRef.current) return;
         // Try immediately, then retry briefly in case host bridge isn't ready yet
         const tryReady = async () => {
           try {
