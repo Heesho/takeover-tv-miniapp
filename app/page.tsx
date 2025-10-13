@@ -107,9 +107,34 @@ export default function Home() {
       try {
         const inMini = await isInMiniAppAsync(150);
         if (!inMini || readyCalledRef.current) return;
-        await (sdk as any)?.actions?.ready?.();
-        readyCalledRef.current = true;
-        console.log("Mini App ready() called on mount");
+        // Try immediately, then retry briefly in case host bridge isn't ready yet
+        const tryReady = async () => {
+          try {
+            await (sdk as any)?.actions?.ready?.();
+            readyCalledRef.current = true;
+            console.log("Mini App ready() success");
+            return true;
+          } catch (e) {
+            console.warn("ready() attempt failed; will retry", e);
+            return false;
+          }
+        };
+
+        if (!(await tryReady())) {
+          let attempts = 0;
+          const id = window.setInterval(async () => {
+            if (readyCalledRef.current) {
+              clearInterval(id);
+              return;
+            }
+            attempts += 1;
+            const ok = await tryReady();
+            if (ok || attempts >= 20) {
+              clearInterval(id);
+              if (!ok) console.warn("ready() retries exhausted");
+            }
+          }, 300);
+        }
       } catch (e) {
         console.warn("ready() call failed on mount", e);
       }
