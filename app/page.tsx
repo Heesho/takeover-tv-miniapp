@@ -251,26 +251,28 @@ export default function Home() {
           <div className="flex flex-col h-full space-y-3 py-3 tv-border">
             {/* Header */}
             <div className="flex items-center justify-between px-3 flex-shrink-0">
-              {/* Left: Farcaster user info (restore original placement) */}
+              {/* Left: Power + Title */}
               <div className="flex items-center space-x-3">
+                <button onClick={handlePowerOff} className="p-1 text-retro-pink hover:opacity-80 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+                  </svg>
+                </button>
+                <h1 className="text-xl tracking-wider">TAKE0VER TV</h1>
+              </div>
+
+              {/* Right: Farcaster user info */}
+              <div className="flex items-center space-x-2 text-right">
+                <div className="text-right mr-2">
+                  <p className="font-bold">{user?.displayName || "Guest"}</p>
+                  {user?.username && <p className="text-gray-400">@{user.username}</p>}
+                </div>
                 <img
                   src={user?.pfpUrl || `https://api.dicebear.com/7.x/shapes/svg?seed=${address}`}
                   alt="User"
                   className="w-9 h-9 rounded-full border-2 border-gray-700 bg-gray-800"
                 />
-                <div className="text-left">
-                  <p className="font-bold">{user?.displayName || "Guest"}</p>
-                  {user?.username && <p className="text-gray-400">@{user.username}</p>}
-                </div>
-                <h1 className="text-xl tracking-wider ml-2">TAKE0VER TV</h1>
               </div>
-
-              {/* Right: Power control only */}
-              <button onClick={handlePowerOff} className="p-1 text-retro-pink hover:opacity-80 transition-opacity">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
-                </svg>
-              </button>
             </div>
 
             {/* TV Screen */}
