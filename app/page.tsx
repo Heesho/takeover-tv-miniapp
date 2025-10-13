@@ -143,7 +143,12 @@ export default function Home() {
     })();
   }, []);
 
-  const handlePowerOn = async () => setIsPoweredOn(true);
+  const [unmuteKey, setUnmuteKey] = useState(0);
+  const handlePowerOn = async () => {
+    setIsPoweredOn(true);
+    // Bump unmute key to force unmuted playback as a direct user gesture
+    setUnmuteKey((k) => k + 1);
+  };
   const handlePowerOff = () => setIsPoweredOn(false);
   const handleTakeover = (url: string) => takeover(url);
   const handleApprove = (amount: bigint) => approve(amount);
@@ -281,7 +286,11 @@ export default function Home() {
 
             {/* TV Screen */}
             <div className="aspect-video relative overflow-hidden flex-shrink-0">
-              <VideoPlayer url={slot0?.uri || `https://twitch.tv/${env.defaultChannel}`} isActive={isPoweredOn} />
+              <VideoPlayer
+                url={slot0?.uri || `https://twitch.tv/${env.defaultChannel}`}
+                isActive={isPoweredOn}
+                unmuteKey={unmuteKey}
+              />
             </div>
 
             {/* Channel Info */}
