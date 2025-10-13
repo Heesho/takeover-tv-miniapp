@@ -93,8 +93,14 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
       const knownParents = getKnownParentDomains();
       console.log('Creating Twitch Player with parents:', knownParents);
 
-      // Create the Twitch Player
-      const player = new window.Twitch.Player(playerId, {
+      // Create the Twitch Player (guard and assert availability for TS)
+      const twitchApi = (window as any).Twitch as { Player?: new (id: string, options: any) => TwitchPlayer } | undefined;
+      if (!twitchApi || !twitchApi.Player) {
+        console.error('Twitch API not available at player creation time');
+        setHasError(true);
+        return;
+      }
+      const player = new twitchApi.Player(playerId, {
         width: '100%',
         height: '100%',
         channel: channelName,
