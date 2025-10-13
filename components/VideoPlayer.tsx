@@ -6,8 +6,6 @@ import { getTwitchChannel, getKnownParentDomains } from '@/utils/twitch';
 interface VideoPlayerProps {
   url: string;
   isActive: boolean;
-  // Bump this when a user gesture should force unmute+play
-  unmuteKey?: number;
 }
 
 // Declare Twitch global type
@@ -28,14 +26,13 @@ interface TwitchPlayer {
   addEventListener(event: string, callback: () => void): void;
 }
 
-export function VideoPlayer({ url, isActive, unmuteKey }: VideoPlayerProps) {
+export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<TwitchPlayer | null>(null);
   const [hasError, setHasError] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [twitchReady, setTwitchReady] = useState(false);
-  const [needsUnmute, setNeedsUnmute] = useState(false);
-  const pendingUnmuteRef = useRef(false);
+  const [needsUnmute] = useState(false);
 
   // Extract channel name
   const channelName = url ? getTwitchChannel(url) : null;
@@ -120,42 +117,9 @@ export function VideoPlayer({ url, isActive, unmuteKey }: VideoPlayerProps) {
         setIsPlayerReady(true);
 
         // Ensure unmuted playback (redundant but ensures it works)
-        try {
-          player.setMuted(false);
-          (player as any).setVolume?.(0.6);
-          player.play();
-          setNeedsUnmute(false);
-        } catch {}
-
-        // Apply any pending user-gesture unmute
-        if (pendingUnmuteRef.current) {
-          try {
-            player.setMuted(false);
-            (player as any).setVolume?.(0.6);
-            player.play();
-            pendingUnmuteRef.current = false;
-            setNeedsUnmute(false);
-          } catch {}
-        }
+        player.setMuted(false);
+        try { player.play(); } catch {}
       });
-
-      // Autoplay blocked handler: wait for first user gesture, then unmute+play
-      try {
-        (player as any).addEventListener?.('PLAYBACK_BLOCKED', () => {
-          console.warn('Twitch autoplay blocked – awaiting user gesture');
-          setNeedsUnmute(true);
-          const onFirstPointer = () => {
-            try {
-              player.setMuted(false);
-              (player as any).setVolume?.(0.6);
-              player.play();
-            } catch {}
-            setNeedsUnmute(false);
-            document.removeEventListener('pointerdown', onFirstPointer, true);
-          };
-          document.addEventListener('pointerdown', onFirstPointer, true);
-        });
-      } catch {}
 
       playerRef.current = player;
 
@@ -184,32 +148,10 @@ export function VideoPlayer({ url, isActive, unmuteKey }: VideoPlayerProps) {
       console.log('Updating channel to:', channelName);
       playerRef.current.setChannel(channelName);
       // Ensure it stays unmuted after channel change
-      try {
-        playerRef.current.setMuted(false);
-        (playerRef.current as any).setVolume?.(0.6);
-        playerRef.current.play();
-        setNeedsUnmute(false);
-      } catch {}
+      playerRef.current.setMuted(false);
+      try { playerRef.current.play(); } catch {}
     }
   }, [channelName, isPlayerReady]);
-
-  // Force unmute+play in response to a user gesture (e.g., power-on)
-  useEffect(() => {
-    if (!unmuteKey) return;
-    if (playerRef.current && isPlayerReady) {
-      try {
-        playerRef.current.setMuted(false);
-        (playerRef.current as any).setVolume?.(0.6);
-        playerRef.current.play();
-        setNeedsUnmute(false);
-      } catch {
-        // If player not ready to accept commands, queue it
-        pendingUnmuteRef.current = true;
-      }
-    } else {
-      pendingUnmuteRef.current = true;
-    }
-  }, [unmuteKey, isPlayerReady]);
 
   // Show TV static when not active, or when there's an error
   if (!isActive || hasError) {
@@ -221,13 +163,5 @@ export function VideoPlayer({ url, isActive, unmuteKey }: VideoPlayerProps) {
     );
   }
 
-  return (
-    <div ref={containerRef} className="w-full h-full bg-black relative">
-      {needsUnmute && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/55 text-white text-xs px-3 py-1 rounded">Tap anywhere to unmute</div>
-        </div>
-      )}
-    </div>
-  );
+  return <div ref={containerRef} className="w-full h-full bg-black" />;
 }
