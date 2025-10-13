@@ -185,13 +185,10 @@ export function useTelevision(): UseTelevisionReturn {
     }
 
     const delta = needs - allowance;
-    const functionName = allowance > 0n ? 'increaseAllowance' : 'approve' as const;
-    const args = allowance > 0n
-      ? [env.televisionContract, delta]
-      : [env.televisionContract, needs];
 
+    const method = allowance > 0n ? 'increaseAllowance' : 'approve';
     console.log('Initiating approval...', {
-      method: functionName,
+      method,
       allowance: allowance.toString(),
       delta: delta.toString(),
       finalAllowanceTarget: needs.toString(),
@@ -200,13 +197,23 @@ export function useTelevision(): UseTelevisionReturn {
       chainIdFromHook: chainId,
     });
 
-    writeApprove({
-      address: env.usdcContract,
-      abi: usdcAbi,
-      functionName,
-      args,
-      chainId: base.id, // Always use Base mainnet (8453)
-    });
+    if (allowance > 0n) {
+      writeApprove({
+        address: env.usdcContract,
+        abi: usdcAbi,
+        functionName: 'increaseAllowance',
+        args: [env.televisionContract, delta] as const,
+        chainId: base.id, // Always use Base mainnet (8453)
+      });
+    } else {
+      writeApprove({
+        address: env.usdcContract,
+        abi: usdcAbi,
+        functionName: 'approve',
+        args: [env.televisionContract, needs] as const,
+        chainId: base.id, // Always use Base mainnet (8453)
+      });
+    }
   };
 
   const takeover = (uri: string) => {
