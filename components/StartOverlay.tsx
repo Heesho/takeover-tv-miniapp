@@ -11,9 +11,7 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
 
       <div>
         <div className="mb-10 inline-block">
-          <h1 className="text-6xl glitch-text" data-text="TAKE0VER">
-            TAKE0VER
-          </h1>
+          <h1 className="text-6xl glitch-text" data-text="TAKE0VER">TAKE0VER</h1>
           <h1 className="text-8xl flex justify-between w-full">
             <span className="glitch-text" data-text="•">•</span>
             <span className="glitch-text" data-text="TV">TV</span>
@@ -47,3 +45,5 @@ export function StartOverlay({ onStart }: StartOverlayProps) {
     </div>
   );
 }
+
+

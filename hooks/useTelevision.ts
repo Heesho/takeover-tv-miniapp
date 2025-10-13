@@ -107,6 +107,7 @@ export function useTelevision(): UseTelevisionReturn {
     functionName: 'allowance',
     args: address ? [address, env.televisionContract] : undefined,
     query: {
+      enabled: !!address,
       refetchInterval: 2000, // Poll every 2 seconds to detect approval changes
     },
   });
@@ -168,8 +169,32 @@ export function useTelevision(): UseTelevisionReturn {
   const approve = (amount: bigint) => {
     if (!address) throw new Error('Wallet not connected');
 
-    console.log('Initiating approve transaction...', {
-      amount: amount.toString(),
+    // Add +10% buffer to avoid edge cases during tx inclusion.
+    const bufferedAmount = amount + (amount / 10n);
+
+    const needs = bufferedAmount > 0n ? bufferedAmount : 0n;
+    const allowance = userAllowance || 0n;
+
+    // If allowance already sufficient, skip approval.
+    if (allowance >= needs) {
+      console.log('Skipping approve: allowance sufficient', {
+        allowance: allowance.toString(),
+        needs: needs.toString(),
+      });
+      return;
+    }
+
+    const delta = needs - allowance;
+    const functionName = allowance > 0n ? 'increaseAllowance' : 'approve' as const;
+    const args = allowance > 0n
+      ? [env.televisionContract, delta]
+      : [env.televisionContract, needs];
+
+    console.log('Initiating approval...', {
+      method: functionName,
+      allowance: allowance.toString(),
+      delta: delta.toString(),
+      finalAllowanceTarget: needs.toString(),
       spender: env.televisionContract,
       chainId: base.id,
       chainIdFromHook: chainId,
@@ -178,8 +203,8 @@ export function useTelevision(): UseTelevisionReturn {
     writeApprove({
       address: env.usdcContract,
       abi: usdcAbi,
-      functionName: 'approve',
-      args: [env.televisionContract, amount],
+      functionName,
+      args,
       chainId: base.id, // Always use Base mainnet (8453)
     });
   };
@@ -188,38 +213,50 @@ export function useTelevision(): UseTelevisionReturn {
     if (!address) throw new Error('Wallet not connected');
     if (!slot0Data) throw new Error('Channel data not loaded');
 
-    // Calculate deadline: 10 minutes from now
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
+    (async () => {
+      // Calculate deadline: 10 minutes from now
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
 
-    // Set max payment amount: current price + 10% buffer to prevent front-running
-    const maxPaymentAmount = currentPrice + (currentPrice * 10n) / 100n;
+      // Refresh latest price/slot0 right before write to reduce epoch/price races
+      let latestPrice = currentPrice;
+      try {
+        const [slot0Refetched, priceRefetched] = await Promise.all([refetchSlot0(), refetchPrice()]);
+        if (priceRefetched?.data !== undefined) {
+          latestPrice = priceRefetched.data as bigint;
+        }
+      } catch (e) {
+        console.warn('Refetch before takeover failed; proceeding with cached data');
+      }
 
-    console.log('Initiating takeover transaction...', {
-      uri,
-      channelOwner: address,
-      epochId: slot0Data.epochId,
-      deadline: deadline.toString(),
-      maxPaymentAmount: maxPaymentAmount.toString(),
-      currentPrice: currentPrice.toString(),
-      userAllowance: userAllowance.toString(),
-    });
+      const maxPaymentAmount = latestPrice + (latestPrice * 10n) / 100n;
 
-    // Validation checks
-    if (userAllowance < currentPrice) {
-      throw new Error('Insufficient USDC allowance. Please approve first.');
-    }
+      console.log('Initiating takeover transaction...', {
+        uri,
+        channelOwner: address,
+        epochId: slot0Data.epochId,
+        deadline: deadline.toString(),
+        maxPaymentAmount: maxPaymentAmount.toString(),
+        currentPrice: latestPrice.toString(),
+        userAllowance: userAllowance.toString(),
+      });
 
-    if (userBalance < currentPrice) {
-      throw new Error('Insufficient USDC balance.');
-    }
+      // Validation checks
+      if (userAllowance < latestPrice) {
+        throw new Error('Insufficient USDC allowance. Please approve first.');
+      }
 
-    writeTakeover({
-      address: env.televisionContract,
-      abi: televisionAbi,
-      functionName: 'takeover',
-      args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
-      chainId: base.id, // Always use Base mainnet (8453)
-    });
+      if (userBalance < latestPrice) {
+        throw new Error('Insufficient USDC balance.');
+      }
+
+      writeTakeover({
+        address: env.televisionContract,
+        abi: televisionAbi,
+        functionName: 'takeover',
+        args: [uri, address, BigInt(slot0Data.epochId), deadline, maxPaymentAmount],
+        chainId: base.id, // Always use Base mainnet (8453)
+      });
+    })();
   };
 
   // Parse slot0 data

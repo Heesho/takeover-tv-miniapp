@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getTwitchChannel } from '@/utils/twitch';
+import { getTwitchChannel, getKnownParentDomains } from '@/utils/twitch';
 
 interface VideoPlayerProps {
   url: string;
@@ -31,9 +31,35 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
   const playerRef = useRef<TwitchPlayer | null>(null);
   const [hasError, setHasError] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [twitchReady, setTwitchReady] = useState(false);
 
   // Extract channel name
   const channelName = url ? getTwitchChannel(url) : null;
+
+  // Ensure the Twitch Player API is loaded before attempting to create the player
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.Twitch?.Player) {
+      setTwitchReady(true);
+      return;
+    }
+
+    // Attempt to detect when the script loads (polling fallback)
+    let tries = 0;
+    const maxTries = 50; // ~10s at 200ms
+    const interval = setInterval(() => {
+      tries += 1;
+      if (window.Twitch?.Player) {
+        setTwitchReady(true);
+        clearInterval(interval);
+      } else if (tries >= maxTries) {
+        console.error('Twitch Player API not available after waiting');
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!isActive || !containerRef.current || !channelName) {
@@ -44,15 +70,13 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
       return;
     }
 
-    console.log('VideoPlayer initializing for channel:', channelName);
-    setHasError(false);
-
-    // Check if Twitch Player API is loaded
-    if (!window.Twitch?.Player) {
-      console.error('Twitch Player API not loaded');
-      setHasError(true);
+    if (!twitchReady) {
+      // Wait until Twitch API is ready
       return;
     }
+
+    console.log('VideoPlayer initializing for channel:', channelName);
+    setHasError(false);
 
     // Generate unique ID for this player instance
     const playerId = `twitch-player-${Date.now()}`;
@@ -66,24 +90,7 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
     containerRef.current.appendChild(playerDiv);
 
     try {
-      // Get known parent domains
-      const knownParents = [
-        'client.warpcast.com',
-        'supercast.xyz',
-        'embeds.lfg.castle.fyi',
-        'farcaster.xyz',
-        'take0ver-tv.vercel.app',
-      ];
-
-      const currentHost = window.location.hostname;
-      if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-        if (!knownParents.includes('localhost')) {
-          knownParents.push('localhost');
-        }
-      } else if (currentHost && !knownParents.includes(currentHost)) {
-        knownParents.push(currentHost);
-      }
-
+      const knownParents = getKnownParentDomains();
       console.log('Creating Twitch Player with parents:', knownParents);
 
       // Create the Twitch Player
@@ -93,7 +100,7 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
         channel: channelName,
         parent: knownParents,
         autoplay: true,
-        muted: false, // Start unmuted - this should work because player creation happens in response to user gesture chain
+        muted: false, // Attempt unmuted; some clients may still require user gesture
         allowfullscreen: true,
       });
 
@@ -125,7 +132,7 @@ export function VideoPlayer({ url, isActive }: VideoPlayerProps) {
       }
       setIsPlayerReady(false);
     };
-  }, [url, channelName, isActive]);
+  }, [url, channelName, isActive, twitchReady]);
 
   // Update channel when URL changes (for takeovers)
   useEffect(() => {

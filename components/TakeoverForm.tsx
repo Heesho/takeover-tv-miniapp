@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { formatUnits } from 'viem';
 import { isValidTwitchUrl } from '@/utils/twitch';
 
@@ -16,6 +16,9 @@ interface TakeoverFormProps {
   isTakeoverSuccess: boolean;
   shouldShowApproveSuccess: boolean;
   shouldShowTakeoverSuccess: boolean;
+  approveErrorMessage?: string;
+  takeoverErrorMessage?: string;
+  initialUrl?: string;
 }
 
 export function TakeoverForm({
@@ -30,10 +33,20 @@ export function TakeoverForm({
   isTakeoverSuccess,
   shouldShowApproveSuccess,
   shouldShowTakeoverSuccess,
+  approveErrorMessage,
+  takeoverErrorMessage,
+  initialUrl,
 }: TakeoverFormProps) {
   const [url, setUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Prefill URL from context (e.g., cast_share/cast_embed), if provided
+  useEffect(() => {
+    if (!url && initialUrl && isValidTwitchUrl(initialUrl)) {
+      setUrl(initialUrl);
+    }
+  }, [initialUrl, url]);
 
   useEffect(() => {
     setIsValidUrl(url ? isValidTwitchUrl(url) : false);
@@ -43,7 +56,8 @@ export function TakeoverForm({
   useEffect(() => {
     if (shouldShowApproveSuccess) {
       setMessage('Approval successful! Click TAKE0VER to continue.');
-      setTimeout(() => setMessage(''), 1500);
+      const t = setTimeout(() => setMessage(''), 1500);
+      return () => clearTimeout(t);
     }
   }, [shouldShowApproveSuccess]);
 
@@ -51,38 +65,38 @@ export function TakeoverForm({
     if (shouldShowTakeoverSuccess) {
       setMessage('TAKE0VER SUCCESSFUL!');
       setUrl('');
-      setTimeout(() => setMessage(''), 1500);
+      const t = setTimeout(() => setMessage(''), 1500);
+      return () => clearTimeout(t);
     }
   }, [shouldShowTakeoverSuccess]);
+
+  // Surface any async transaction errors from parent
+  useEffect(() => {
+    if (approveErrorMessage) {
+      setMessage(approveErrorMessage);
+      const t = setTimeout(() => setMessage(''), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [approveErrorMessage]);
+
+  useEffect(() => {
+    if (takeoverErrorMessage) {
+      setMessage(takeoverErrorMessage);
+      const t = setTimeout(() => setMessage(''), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [takeoverErrorMessage]);
 
   // When price is $0, no approval or balance check needed
   const isFreePrice = currentPrice === 0n;
   const needsApproval = !isFreePrice && userAllowance < currentPrice;
   const hasInsufficientBalance = !isFreePrice && currentPrice > userBalance;
 
-  // Debug logging for button state when price is $0
-  useEffect(() => {
-    if (isFreePrice && url) {
-      console.log('🎯 Free takeover available! Button state:', {
-        isValidUrl,
-        hasInsufficientBalance,
-        isPending,
-        isApprovePending,
-        isDisabled: !isValidUrl || hasInsufficientBalance || isPending || isApprovePending,
-        currentPrice: currentPrice.toString(),
-        userBalance: userBalance.toString(),
-        userAllowance: userAllowance.toString(),
-      });
-    }
-  }, [isFreePrice, isValidUrl, hasInsufficientBalance, isPending, isApprovePending, currentPrice, userBalance, userAllowance, url]);
-
   const handleApprove = () => {
     if (!isValidUrl) return;
-
     try {
       onApprove(currentPrice);
     } catch (error) {
-      console.error('Approval failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Approval failed. Please try again.';
       setMessage(errorMessage);
       setTimeout(() => setMessage(''), 5000);
@@ -91,11 +105,9 @@ export function TakeoverForm({
 
   const handleTakeover = () => {
     if (!isValidUrl) return;
-
     try {
       onTakeover(url);
     } catch (error) {
-      console.error('Take0ver failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Take0ver failed. Please try again.';
       setMessage(errorMessage);
       setTimeout(() => setMessage(''), 5000);
@@ -107,11 +119,6 @@ export function TakeoverForm({
     if (hasInsufficientBalance) return 'INSUFFICIENT BALANCE';
     if (needsApproval) return 'APPROVE';
     return 'TAKE0VER';
-  };
-
-  const getButtonAction = () => {
-    if (needsApproval) return handleApprove;
-    return handleTakeover;
   };
 
   const isButtonDisabled = !isValidUrl || hasInsufficientBalance || isPending || isApprovePending;
@@ -142,7 +149,7 @@ export function TakeoverForm({
             <label htmlFor="video-url">BROADCAST A STREAM</label>
           </div>
           <span className={`text-xs ${isValidUrl ? 'text-green-500' : url ? 'text-red-500' : ''}`}>
-            {url && (isValidUrl ? '✓ Valid URL' : '✗ Invalid URL')}
+            {url && (isValidUrl ? 'Valid URL' : 'Invalid URL')}
           </span>
         </div>
         <input
@@ -158,13 +165,7 @@ export function TakeoverForm({
 
       {/* Action Button */}
       <button
-        onClick={() => {
-          if (needsApproval) {
-            handleApprove();
-          } else {
-            handleTakeover();
-          }
-        }}
+        onClick={() => (needsApproval ? handleApprove() : handleTakeover())}
         disabled={isButtonDisabled}
         className="w-full p-2.5 rounded-lg takeover-button font-bold transition-opacity disabled:opacity-50"
       >
@@ -179,7 +180,7 @@ export function TakeoverForm({
 
       {/* Info Text */}
       <p className="text-xs text-gray-500 text-center leading-tight pt-1">
-        Take0ver the TV to broadcast a stream. Price doubles on take0ver then drops to $0 over 1 hour. 90% of the take0ver payment goes to the previous broadcaster.
+        Take0ver the TV to broadcast a stream. Price doubles on takeover then drops to $0 over 1 hour. 90% of the takeover payment goes to the previous broadcaster.
       </p>
 
       {/* Message Overlay */}
@@ -191,3 +192,5 @@ export function TakeoverForm({
     </div>
   );
 }
+
+

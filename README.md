@@ -1,4 +1,4 @@
-# Takeover TV
+# Take0ver TV
 
 A community-controlled television built as a Farcaster Mini App. Users can "take over" the shared screen and broadcast their Twitch stream by paying the current takeover price. The price doubles after each takeover and decays back to zero over one hour, creating an engaging economic game.
 

@@ -1,20 +1,38 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAccount, useConnect, useReconnect } from 'wagmi';
-import { sdk } from '@farcaster/miniapp-sdk';
-import { StartOverlay } from '@/components/StartOverlay';
-import { VideoPlayer } from '@/components/VideoPlayer';
-import { ChannelInfo } from '@/components/ChannelInfo';
-import { TakeoverForm } from '@/components/TakeoverForm';
-import { useFarcasterContext } from '@/hooks/useFarcasterContext';
-import { useTelevision } from '@/hooks/useTelevision';
-import { env } from '@/utils/env';
+import { useState, useEffect } from "react";
+import { useAccount, useConnect, useReconnect } from "wagmi";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { StartOverlay } from "@/components/StartOverlay";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { ChannelInfo } from "@/components/ChannelInfo";
+import { TakeoverForm } from "@/components/TakeoverForm";
+import { useFarcasterContext } from "@/hooks/useFarcasterContext";
+import { useTelevision } from "@/hooks/useTelevision";
+import { env } from "@/utils/env";
+import { useMiniAppCapabilities } from "@/hooks/useMiniAppCapabilities";
+import { isValidTwitchUrl } from "@/utils/twitch";
+import { useMiniAppEvents } from "@/hooks/useMiniAppEvents";
+
+// Clean error mapper (normalized punctuation)
+function mapErrorFriendly(err?: Error | null): string | undefined {
+  if (!err) return undefined;
+  const raw = (err as any)?.shortMessage || err.message || "";
+  if (!raw) return undefined;
+  if (/User rejected|User denied|Request rejected/i.test(raw)) return "Transaction rejected by user.";
+  if (raw.includes("Television__Expired")) return "Price expired - please try again.";
+  if (raw.includes("Television__EpochIdMismatch")) return "Channel state changed - refresh and try again.";
+  if (raw.includes("Television__MaxPaymentAmountExceeded")) return "Price moved - increase buffer and retry.";
+  if (/insufficient funds|balance/i.test(raw)) return "Insufficient balance.";
+  if (/allowance/i.test(raw)) return "Insufficient allowance - approve first.";
+  return raw;
+}
 
 export default function Home() {
   const [isPoweredOn, setIsPoweredOn] = useState(false);
   const [lastShownTakeoverSuccess, setLastShownTakeoverSuccess] = useState(false);
   const [lastShownApproveSuccess, setLastShownApproveSuccess] = useState(false);
+
   const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { reconnect } = useReconnect();
   const { connect, connectors } = useConnect();
@@ -31,96 +49,145 @@ export default function Home() {
     isApprovePending,
     isApproveSuccess,
     isTakeoverSuccess,
+    approveError,
+    takeoverError,
   } = useTelevision();
 
-  // Automatically reconnect wallet on mount
+  // Auto-reconnect wallet and try Farcaster connector if available
   useEffect(() => {
     reconnect();
   }, [reconnect]);
 
-  // Try to connect if not connected and user is loaded
   useEffect(() => {
     if (!isConnected && !isConnecting && !isReconnecting && !isUserLoading && user) {
-      console.log('Wallet not connected, attempting to connect...');
-      const farcasterConnector = connectors.find(c => c.id === 'farcasterMiniApp');
-      if (farcasterConnector) {
-        connect({ connector: farcasterConnector });
-      }
+      const farcasterConnector = connectors.find((c) => c.id === "farcasterMiniApp");
+      if (farcasterConnector) connect({ connector: farcasterConnector });
     }
   }, [isConnected, isConnecting, isReconnecting, isUserLoading, user, connect, connectors]);
 
-  // Track success states to prevent showing stale messages after TV power cycle
+  const { capabilities } = useMiniAppCapabilities();
+  const { isAdded } = useMiniAppEvents();
+  const canAddMiniApp = (isAdded === false) && capabilities?.includes('actions.addMiniApp');
+  const canComposeCast = capabilities?.includes('actions.composeCast');
+  const canViewCast = capabilities?.includes('actions.viewCast');
+  const canOpenUrl = capabilities?.includes('actions.openUrl');
+
+  // Track success; provide light haptics if supported
   useEffect(() => {
     if (isTakeoverSuccess && isTakeoverSuccess !== lastShownTakeoverSuccess) {
       setLastShownTakeoverSuccess(true);
+      try {
+        if (capabilities?.includes('haptics.notificationOccurred')) {
+          (sdk as any)?.haptics?.notificationOccurred?.('success');
+        }
+      } catch {}
     } else if (!isTakeoverSuccess && lastShownTakeoverSuccess) {
-      // Reset when transaction completes/resets for next transaction
       setLastShownTakeoverSuccess(false);
     }
-  }, [isTakeoverSuccess, lastShownTakeoverSuccess]);
+  }, [isTakeoverSuccess, lastShownTakeoverSuccess, capabilities]);
 
   useEffect(() => {
     if (isApproveSuccess && isApproveSuccess !== lastShownApproveSuccess) {
       setLastShownApproveSuccess(true);
+      try {
+        if (capabilities?.includes('haptics.notificationOccurred')) {
+          (sdk as any)?.haptics?.notificationOccurred?.('success');
+        }
+      } catch {}
     } else if (!isApproveSuccess && lastShownApproveSuccess) {
-      // Reset when transaction completes/resets for next transaction
       setLastShownApproveSuccess(false);
     }
-  }, [isApproveSuccess, lastShownApproveSuccess]);
+  }, [isApproveSuccess, lastShownApproveSuccess, capabilities]);
 
-  // Log wallet connection status
+  // sdk.ready when stable
   useEffect(() => {
-    console.log('Wallet status:', {
-      address,
-      isConnected,
-      isConnecting,
-      isReconnecting,
-      userFid: user?.fid,
-    });
-  }, [address, isConnected, isConnecting, isReconnecting, user?.fid]);
-
-  // Log channel changes for debugging
-  useEffect(() => {
-    if (slot0) {
-      console.log('📺 Channel updated from contract:', {
-        owner: slot0.owner,
-        uri: slot0.uri,
-        price: currentPrice.toString(),
-      });
-    }
-  }, [slot0?.uri, slot0?.owner, currentPrice]);
-
-  // Call sdk.actions.ready() as soon as the app finishes loading
-  useEffect(() => {
-    // Only call ready() after initial data loading is complete
     if (!isUserLoading && !isChannelLoading) {
-      sdk.actions.ready()
-        .then(() => {
-          console.log('Mini App ready called successfully');
-        })
-        .catch((error) => {
-          console.error('Failed to call sdk.actions.ready():', error);
-        });
+      sdk.actions
+        .ready()
+        .then(() => console.log("Mini App ready called successfully"))
+        .catch((e) => console.error("Failed to call sdk.actions.ready():", e));
     }
   }, [isUserLoading, isChannelLoading]);
 
-  const handlePowerOn = async () => {
-    setIsPoweredOn(true);
-  };
+  const handlePowerOn = async () => setIsPoweredOn(true);
+  const handlePowerOff = () => setIsPoweredOn(false);
+  const handleTakeover = (url: string) => takeover(url);
+  const handleApprove = (amount: bigint) => approve(amount);
 
-  const handlePowerOff = () => {
-    setIsPoweredOn(false);
-  };
+  async function handleAddMiniApp() {
+    try {
+      await (sdk as any)?.actions?.addMiniApp?.();
+      try {
+        if (capabilities?.includes('haptics.notificationOccurred')) {
+          (sdk as any)?.haptics?.notificationOccurred?.('success');
+        }
+      } catch {}
+    } catch (e) {
+      console.error('addMiniApp failed:', e);
+    }
+  }
 
-  const handleTakeover = (url: string) => {
-    takeover(url);
-  };
+  async function handleComposeCast() {
+    try {
+      const text = `I just took over the TV on Take0ver TV - come watch or steal the screen next!`;
+      const embedUrl = slot0?.uri || env.appUrl;
+      await (sdk as any)?.actions?.composeCast?.({ text, embeds: [embedUrl] as [string] });
+    } catch (e) {
+      console.error('composeCast failed:', e);
+    }
+  }
 
-  const handleApprove = (amount: bigint) => {
-    approve(amount);
-  };
+  async function handleViewCast(close = false) {
+    try {
+      const hash = (sdk as any)?.context?.location?.cast?.hash;
+      if (!hash) {
+        console.warn('No cast hash found in context');
+        return;
+      }
+      await (sdk as any)?.actions?.viewCast?.({ hash, close });
+    } catch (e) {
+      console.error('viewCast failed:', e);
+    }
+  }
 
-  // Show loading state
+  async function handleOpenUrl() {
+    try {
+      const targetUrl = slot0?.uri || env.appUrl;
+      await (sdk as any)?.actions?.openUrl?.({ url: targetUrl });
+    } catch (e) {
+      console.error('openUrl failed:', e);
+    }
+  }
+
+  // Prefill URL from cast context
+  const initialUrl = (() => {
+    try {
+      const loc: any = (sdk as any)?.context?.location;
+      if (!loc) return undefined;
+      const embeds: string[] | undefined = loc?.cast?.embeds;
+      if (Array.isArray(embeds)) {
+        return embeds.find((e) => typeof e === "string" && isValidTwitchUrl(e));
+      }
+    } catch {}
+    return undefined;
+  })();
+
+  const approveErrorMessage = mapErrorFriendly(approveError);
+  const takeoverErrorMessage = mapErrorFriendly(takeoverError);
+
+  // Safe area insets
+  const safeArea = (sdk as any)?.context?.client?.safeAreaInsets as
+    | { top: number; bottom: number; left: number; right: number }
+    | undefined;
+  const safeAreaStyle = safeArea
+    ? {
+        paddingTop: safeArea.top,
+        paddingBottom: safeArea.bottom,
+        paddingLeft: safeArea.left,
+        paddingRight: safeArea.right,
+      }
+    : undefined;
+
   if (isUserLoading || isChannelLoading) {
     return (
       <div className="bg-black text-white flex items-center justify-center min-h-screen">
@@ -130,39 +197,38 @@ export default function Home() {
   }
 
   return (
-    <div className="bg-black text-white flex items-center justify-center min-h-screen">
+    <div className="bg-black text-white flex items-center justify-center min-h-screen" style={safeAreaStyle}>
       <div className="w-full max-w-md mx-auto h-auto aspect-[9/19.5] max-h-[95vh] flex flex-col">
-        {/* Power On Screen */}
         {!isPoweredOn ? (
           <div className="flex flex-col items-center justify-around h-full tv-border p-4 text-center">
             <StartOverlay onStart={handlePowerOn} />
           </div>
         ) : (
-          /* Main App Screen */
           <div className="flex flex-col h-full space-y-3 py-3 tv-border">
             {/* Header */}
             <div className="flex items-center justify-between px-3 flex-shrink-0">
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={handlePowerOff}
-                  className="p-1 text-retro-pink hover:opacity-80 transition-opacity"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"
-                    />
+                <button onClick={handlePowerOff} className="p-1 text-retro-pink hover:opacity-80 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
                   </svg>
                 </button>
                 <h1 className="text-xl tracking-wider">TAKE0VER TV</h1>
+                {canViewCast && (sdk as any)?.context?.location?.cast?.hash && (
+                  <>
+                    <button onClick={() => handleViewCast(false)} className="ml-2 px-2 py-1 text-xs border border-gray-700 rounded hover:bg-gray-800">View Cast</button>
+                    <button onClick={() => handleViewCast(true)} className="ml-2 px-2 py-1 text-xs border border-gray-700 rounded hover:bg-gray-800">View & Close</button>
+                  </>
+                )}
+                {canOpenUrl && (
+                  <button onClick={handleOpenUrl} className="ml-2 px-2 py-1 text-xs border border-gray-700 rounded hover:bg-gray-800">Open URL</button>
+                )}
+                {canComposeCast && (
+                  <button onClick={handleComposeCast} className="ml-2 px-2 py-1 text-xs border border-gray-700 rounded hover:bg-gray-800">Compose Cast</button>
+                )}
+                {canAddMiniApp && (
+                  <button onClick={handleAddMiniApp} className="ml-2 px-2 py-1 text-xs border border-gray-700 rounded hover:bg-gray-800">Add App</button>
+                )}
               </div>
 
               {/* User Profile */}
@@ -173,27 +239,19 @@ export default function Home() {
                   className="w-9 h-9 rounded-full border-2 border-gray-700 bg-gray-800"
                 />
                 <div className="text-left">
-                  <p className="font-bold">{user?.displayName || 'Guest'}</p>
+                  <p className="font-bold">{user?.displayName || "Guest"}</p>
                   {user?.username && <p className="text-gray-400">@{user.username}</p>}
                 </div>
               </div>
             </div>
 
-            {/* TV Screen (16:9 aspect ratio) */}
+            {/* TV Screen */}
             <div className="aspect-video relative overflow-hidden flex-shrink-0">
-              <VideoPlayer
-                url={slot0?.uri || `https://twitch.tv/${env.defaultChannel}`}
-                isActive={isPoweredOn}
-              />
+              <VideoPlayer url={slot0?.uri || `https://twitch.tv/${env.defaultChannel}`} isActive={isPoweredOn} />
             </div>
 
             {/* Channel Info */}
-            {slot0 && (
-              <ChannelInfo
-                ownerAddress={slot0.owner}
-                currentPrice={currentPrice}
-              />
-            )}
+            {slot0 && <ChannelInfo ownerAddress={slot0.owner} currentPrice={currentPrice} />}
 
             {/* Takeover Form */}
             <TakeoverForm
@@ -208,6 +266,9 @@ export default function Home() {
               isTakeoverSuccess={isTakeoverSuccess}
               shouldShowApproveSuccess={isApproveSuccess && isApproveSuccess !== lastShownApproveSuccess}
               shouldShowTakeoverSuccess={isTakeoverSuccess && isTakeoverSuccess !== lastShownTakeoverSuccess}
+              approveErrorMessage={approveErrorMessage}
+              takeoverErrorMessage={takeoverErrorMessage}
+              initialUrl={initialUrl}
             />
           </div>
         )}

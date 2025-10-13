@@ -17,31 +17,32 @@ export function isValidTwitchUrl(url: string): boolean {
 /**
  * Constructs a Twitch player iframe URL with proper parent domains for Farcaster clients
  */
-export function buildTwitchPlayerUrl(channelName: string): string {
-  const knownParents = [
+import { getAppHostname } from '@/utils/env';
+
+export function getKnownParentDomains(): string[] {
+  const baseParents = [
     'client.warpcast.com',
     'supercast.xyz',
     'embeds.lfg.castle.fyi',
-    'farcaster.xyz', // Farcaster developer preview tool
-    'take0ver-tv.vercel.app', // Production domain
+    'farcaster.xyz',
   ];
 
-  // Get current hostname (works in browser only)
+  const envHost = getAppHostname();
+  if (envHost && !baseParents.includes(envHost)) baseParents.push(envHost);
+
   if (typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
-
-    // For localhost, we need to add it without the port
     if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-      if (!knownParents.includes('localhost')) {
-        knownParents.push('localhost');
-      }
-    } else if (currentHost && !knownParents.includes(currentHost)) {
-      // For production domains (Vercel, etc.)
-      knownParents.push(currentHost);
+      if (!baseParents.includes('localhost')) baseParents.push('localhost');
+    } else if (currentHost && !baseParents.includes(currentHost)) {
+      baseParents.push(currentHost);
     }
   }
+  return baseParents;
+}
 
-  const parentParams = knownParents.map(p => `parent=${p}`).join('&');
-
+export function buildTwitchPlayerUrl(channelName: string): string {
+  const parents = getKnownParentDomains();
+  const parentParams = parents.map((p) => `parent=${p}`).join('&');
   return `https://player.twitch.tv/?channel=${channelName}&${parentParams}&autoplay=true&muted=false`;
 }
