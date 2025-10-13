@@ -14,6 +14,9 @@ import { useMiniAppCapabilities } from "@/hooks/useMiniAppCapabilities";
 import { isValidTwitchUrl } from "@/utils/twitch";
 import { useMiniAppEvents } from "@/hooks/useMiniAppEvents";
 
+// Unified SDK bridge (handles default vs named export shapes)
+const sdk: any = (namedSdk as any) ?? (defaultSdk as any);
+
 // Clean error mapper (normalized punctuation)
 function mapErrorFriendly(err?: Error | null): string | undefined {
   if (!err) return undefined;
